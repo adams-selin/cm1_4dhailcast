@@ -1,0 +1,72 @@
+netcdf cm1out_haildata {
+dimensions:
+	xh = 3750 ;
+	yh = 1 ;
+	zh = 1 ;
+	time = UNLIMITED ; // (1802 currently)
+variables:
+	float xh(xh) ;
+		xh:long_name = "west-east location ... actually, really hailstone ID number" ;
+		xh:units = "degree_east" ;
+	float yh(yh) ;
+		yh:long_name = "south-north location" ;
+		yh:units = "degree_north" ;
+	float zh(zh) ;
+		zh:long_name = "height" ;
+		zh:units = "m" ;
+	float time(time) ;
+		time:long_name = "time" ;
+		time:units = "seconds" ;
+	float x(time, xh) ;
+		x:long_name = "x position" ;
+		x:units = "m" ;
+	float y(time, xh) ;
+		y:long_name = "y position" ;
+		y:units = "m" ;
+	float z(time, xh) ;
+		z:long_name = "z position (above sea level)" ;
+		z:units = "m" ;
+	float u(time, xh) ;
+		u:long_name = "u velocity" ;
+		u:units = "m/s" ;
+	float v(time, xh) ;
+		v:long_name = "v velocity" ;
+		v:units = "m/s" ;
+	float w(time, xh) ;
+		w:long_name = "w velocity" ;
+		w:units = "m/s" ;
+	float d(time, xh) ;
+		d:long_name = "hailstone diameter" ;
+		d:units = "m" ;
+	float dense(time, xh) ;
+		dense:long_name = "hailstone density" ;
+		dense:units = "kg/m3" ;
+	float tv(time, xh) ;
+		tv:long_name = "hailstone terminal velocity" ;
+		tv:units = "m/s" ;
+	float ts(time, xh) ;
+		ts:long_name = "hailstone temperature" ;
+		ts:units = "K" ;
+	float fw(time, xh) ;
+		fw:long_name = "hailstone water fraction" ;
+		fw:units = "unitless" ;
+	float itype(time, xh) ;
+		itype:long_name = "wet or dry growth mode" ;
+		itype:units = "unitless" ;
+	float dice(time, xh) ;
+		dice:long_name = "hailstone ice-only diameter" ;
+		dice:units = "m" ;
+	float qice(time, xh) ;
+		qice:long_name = "in-cloud ice (qi+qs) at hailstone loc." ;
+		qice:units = "kg/kg" ;
+	float qliq(time, xh) ;
+		qliq:long_name = "in-cloud liquid (qc) at hailstone loc." ;
+		qliq:units = "mm" ;
+	float tc(time, xh) ;
+		tc:long_name = "in-cloud temp. at hailstone loc." ;
+		tc:units = "K" ;
+
+// global attributes:
+		:cm1\ version = "cm1r19.1" ;
+		:Conventions = "COARDS" ;
+}

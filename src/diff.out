@@ -1,0 +1,1175 @@
+adv.F
+adv_routines.F
+anelp.F
+azimavg.F
+base.F
+bc.F
+cm1.F
+41d40
+<       use hailcast_module
+50c49
+<       integer :: srec,sirec,urec,vrec,wrec,nrec,prec,hrec,trecs,trecw,arecs,arecw
+---
+>       integer :: srec,sirec,urec,vrec,wrec,nrec,prec,trecs,trecw,arecs,arecw
+54c53
+<       double precision :: mtime,stattim,taptim,rsttim,radtim,prcltim,hailtrajtim,turbtim,azimavgtim,hifrqtim
+---
+>       double precision :: mtime,stattim,taptim,rsttim,radtim,prcltim,turbtim,azimavgtim,hifrqtim
+69d67
+<       character(len=40), dimension(maxvars) :: name_hail,desc_hail,unit_hail
+136d133
+<       real, dimension(:,:), allocatable :: haildata,hailloc
+184c181
+<       logical :: dorestart,dowriteout,dostat,doprclout,dohailout,dotdwrite,doazimwrite,dohifrqwrite
+---
+>       logical :: dorestart,dowriteout,dostat,doprclout,dotdwrite,doazimwrite,dohifrqwrite
+193c190
+<       logical :: getsfc,update_sfc,startup,restarted,restart_prcl,reset,restart_hail
+---
+>       logical :: getsfc,update_sfc,startup,restarted,restart_prcl,reset
+217d213
+<       hrec=1
+252d247
+<       restart_hail = .false.
+266d260
+<       dohailout = .false.
+791d784
+<                        hailtrajtim, &
+1482,1486d1474
+<       allocate(haildata(nhailtrajs,nhvals) )
+<       haildata = 0.0
+<       allocate(hailloc(nhailtrajs,  12   ) )
+<       hailloc = 0.0
+< 
+1525,1526c1513
+<                   pdata,haildata,cfb,cfa,cfc,d1,d2,pdt,lgbth,lgbph, &
+<                   rhs,trans)
+---
+>                   pdata,cfb,cfa,cfc,d1,d2,pdt,lgbth,lgbph,rhs,trans)
+1630,1637d1616
+<       if( ihailtraj.eq.1 ) THEN 
+<         if(myid.eq.0) THEN     
+<             print *, 'starting setup_hailcast_vars'
+<         endif
+<         call       setup_hailcast_vars(name_hail,desc_hail,unit_hail,qname,tdef)
+<         !if(myid.eq.0)  print *, 'after setup_hailcast_vars hail_out:', hail_out
+<       endif
+< 
+1667c1646
+<                               stattim,taptim,rsttim,radtim,prcltim,hailtrajtim,    &
+---
+>                               stattim,taptim,rsttim,radtim,prcltim,                &
+1684,1686c1663,1664
+<                               qpten,qtten,qvten,qcten,pta,pdata,ploc,              &
+<                               haildata,hailloc,                                    &
+<                               ppx,tdiag,qdiag,phi1,phi2,                           &
+---
+>                               qpten,qtten,qvten,qcten,pta,pdata,ploc,ppx,          &
+>                               tdiag,qdiag,phi1,phi2,                               &
+1688,1689c1666
+<                               dum1,dat1,dat2,dat3,reqt,restarted,restart_prcl,     &
+<                               restart_hail)
+---
+>                               dum1,dat1,dat2,dat3,reqt,restarted,restart_prcl)
+1722d1698
+<         restart_hail = .false.
+1770c1746
+<         if(dowr) write(outfile,*) 'Detected positive value for run_time'
+---
+>         if(dowr) write(outfile,*) '  Detected positive value for run_time. '
+1782c1758
+<                         tha,th3d,qa,q3d,tkea,tke3d,pta,pt3d,pdata,haildata,&
+---
+>                         tha,th3d,qa,q3d,tkea,tke3d,pta,pt3d,pdata,         &
+1807,1810c1783,1784
+<                           mtime,stattim,taptim,rsttim,prcltim,hailtrajtim,              &
+<                           turbtim,azimavgtim,       &
+<                           dorestart,dowriteout,dostat,doprclout,dohailout,              &
+<                           dotdwrite,doazimwrite,  &
+---
+>                           mtime,stattim,taptim,rsttim,prcltim,turbtim,azimavgtim,       &
+>                           dorestart,dowriteout,dostat,doprclout,dotdwrite,doazimwrite,  &
+1821,1822c1795,1796
+<       if(dowr) write(outfile,*) '--------Done with Preprocessors-------'
+<       if(dowr) write(outfile,*) 
+---
+>       if(dowr) write(outfile,*) '-------------Done with Preprocessors-----------'
+>       if(dowr) write(outfile,*)
+1856d1829
+<         dohailout   = .true.
+1867d1839
+<         dohailout   = .false.
+1872d1843
+<         if( .not. restart_hail ) dohailout = .true.
+1932,1940d1902
+<         dohailout  =  .false.
+<         if( ihailtraj.eq.1 )then
+<            if (mtime.ge.hail_start) THEN
+<               if( (mtime+dbldt).ge.(hailtrajtim-0.1*dt) .or. hailfrq.lt.0.0 ) &
+<                  dohailout  =  .true.
+<            endif
+<         endif
+< 
+< 
+2054c2016
+<                    pta,pt3d,ptten,pdata,haildata,                      &
+---
+>                    pta,pt3d,ptten,pdata,                              &
+2205,2208c2167,2168
+<                           mtime,stattim,taptim,rsttim,prcltim,hailtrajtim,&
+<                           turbtim,azimavgtim,       &
+<                           dorestart,dowriteout,dostat,doprclout,dohailout, &
+<                           dotdwrite,doazimwrite,  &
+---
+>                           mtime,stattim,taptim,rsttim,prcltim,turbtim,azimavgtim,       &
+>                           dorestart,dowriteout,dostat,doprclout,dotdwrite,doazimwrite,  &
+2421,2447d2380
+<       if(ihailtraj.eq.1)then
+<       IF( dohailout )THEN
+<         call     hailcast_write(hrec,rtime,qname,name_hail,desc_hail,unit_hail,haildata,hailloc)
+<         prec = prec+1
+<         if(hailfrq.gt.0.0)then
+<           doit = .true.
+<           do while( doit )
+<             hailtrajtim = hailtrajtim+hailfrq
+<             if( hailtrajtim.gt.mtime )then
+<               doit = .false.
+<             endif
+<           enddo
+<         endif
+<         if(timestats.ge.1) time_hailtrajs=time_hailtrajs+mytime()
+<       ELSE
+<         if( startup )then
+<           if(myid.eq.0) print *
+<           if(myid.eq.0) print *,'  NOTE:  skipping hailcast_write '
+<           if(myid.eq.0) print *
+<         endif
+<       ENDIF
+<       endif
+<       !cccccccccccccccccccccccccccccccccccccccccccccccccccccccc!
+<       !cccccccccccccccccccccccccccccccccccccccccccccccccccccccc!
+<       !cccccccccccccccccccccccccccccccccccccccccccccccccccccccc!
+< 
+< 
+2613c2546
+<                                stattim,taptim,rsttim,radtim,prcltim,hailtrajtim,    &
+---
+>                                stattim,taptim,rsttim,radtim,prcltim,                &
+2630,2631c2563
+<                                qpten,qtten,qvten,qcten,pta,pdata,ploc,              &
+<                                haildata,hailloc,ppx,                                &
+---
+>                                qpten,qtten,qvten,qcten,pta,pdata,ploc,ppx,          &
+2673d2604
+<                     time_hailtrajs+                                         &
+2715d2645
+<         dohailout   = .false.
+2894,2896d2823
+<         call MPI_REDUCE(time_hailtrajs ,sum,1,MPI_REAL,MPI_SUM,0,MPI_COMM_WORLD,ierr)
+<         time_hailtrajs = sum/float(numprocs)
+<         sum = 0.0
+2955d2881
+<                   time_hailtrajs+                                         &
+3012d2937
+<       write(outfile,100) 'hailtraj',time_hailtrajs,time_hailtrajs/time_solve
+cm1libs.F
+comm.F
+constants.F
+diff2.F
+getcape.F
+goddard.F
+hail.F
+hifrq.F
+init3d.F
+74,75c74
+<                         pdata,haildata,cfb,cfa,cfc,ad1,ad2,pdt,lgbth,     &
+<                         lgbph,rhs,trans)
+---
+>                         pdata,cfb,cfa,cfc,ad1,ad2,pdt,lgbth,lgbph,rhs,trans)
+85d83
+<       use hailcast_module, only: gethailtrajzs
+122d119
+<       real, dimension(nhailtrajs,nhvals) :: haildata
+353,355c350,352
+<         do k=1,1
+<         do j=1,1
+<         do i=1,1
+---
+>         do k=1,10
+>         do j=1,60
+>         do i=1,60
+359d355
+<             if(dowr) write(outfile,*) ' n, nparcels: ', n, nparcels
+366,371c362,364
+<           !pdata(n,prx) = minx + 2000.0*(i-1)
+<           !pdata(n,pry) = miny + 2000.0*(j-1)
+<           !pdata(n,prz) = zh(1,1,1) + 1000.0*(k-1)
+<           pdata(n,prx) = 53000 + 250*(i-1) 
+<           pdata(n,pry) = 70000 + 250*(j-1)  !52000
+<           pdata(n,prz) = 5000 + 1000.0*(k-1)
+---
+>           pdata(n,prx) = minx + 2000.0*(i-1)
+>           pdata(n,pry) = miny + 2000.0*(j-1)
+>           pdata(n,prz) = zh(1,1,1) + 1000.0*(k-1)
+398,486d390
+< !-----
+< !  hail trajectory info:
+< 
+<       IF(ihailtraj.eq.1)THEN
+< 
+<         ! define initial hailstone embryo locations, sizes, and densities here:
+<         !   haildata(*,hailx) = x location (m)
+<         !   haildata(*,haily) = y location (m)
+<         !   haildata(*,hailz) = z location (m ASL)
+<         !   haildata(*,haild) = diameter (m)
+<         !   haildata(*,haildense) = density (kg/m3)
+< 
+<         ! initialize to really small number (so we can use the allreduce command below)
+<         do n=1,nhailtrajs
+<           haildata(n,hailx) = -1.0e30
+<           haildata(n,haily) = -1.0e30
+<           haildata(n,hailz) = -1.0e30
+<           haildata(n,haild) = -1.0e30
+<           haildata(n,haildense) = -1.0e30
+<           haildata(n,hailvt) = -1.0e30
+<           haildata(n,hailts) = -1.0e30
+<           haildata(n,hailfw) = -1.0e30
+<           haildata(n,hailitype) = -1.0e30
+<         enddo
+< 
+<         ! When do we want the hailstones to "activate" (start interacting with their
+<         ! environment)?  hail_start in the namelist, in seconds. 
+<         if(dowr) write(outfile,*)
+<         if(dowr) write(outfile,*) '  Hail trajectories ! '
+<         if(dowr) write(outfile,*) '  Hail trajectories will "activate" at ',hail_start,' seconds'
+<         if(dowr) write(outfile,*) '  nhvals,nhailtrajs = ',nhvals,nhailtrajs
+<         !if(dowr) write(outfile,*) '  Initial hailstone locations (x,y,z,d,dense):'
+<         n = 0
+<         do k=1,5
+<         do j=1,30
+<         do i=1,25
+<           n = n + 1
+<           if(n.gt.nhailtrajs)then
+<             if(dowr) write(outfile,*)
+<             if(dowr) write(outfile,*) ' You are trying to define too many hailstones'
+<             if(dowr) write(outfile,*)
+<             if(dowr) write(outfile,*) ' Increase the value of nhailtrajs in namelist.input'
+<             if(dowr) write(outfile,*)
+<             if(dowr) write(outfile,*) ' n, nhailtrajs: ', n, nhailtrajs
+<             call stopcm1
+<           endif
+<           haildata(n,hailx) = 50000 + 250*(i-1) 
+<           haildata(n,haily) = 67500 + 250*(j-1)  !52000
+<           !haildata(n,hailx) = 53000 + 250*(i-1) 
+<           !haildata(n,haily) = 70000 + 250*(j-1)  !52000
+<           !haildata(n,haily) = miny + 2000.0*(j-1)
+<           !haildata(n,hailz) = zh(1,1,1) + 1000.0*(k-1)
+<           haildata(n,hailz) = 5000 + 1000.0*(k-1)
+<           haildata(n,haild) = 1.E-2 !10 mm
+<           haildata(n,haildense) = 900 !kg/m3
+<           haildata(n,hailvt) = 0.
+<           haildata(n,hailts) = -999. !263.15 - will set inside hail.F
+<           haildata(n,hailfw) = 0.
+<           haildata(n,hailitype) = 1.
+<           !if(dowr) write(outfile,*) n,haildata(n,hailx),haildata(n,haily),&
+<           !  haildata(n,hailz)
+<           !if(dowr) write(outfile,*) n,haildata(n,haild),haildata(n,haildense)
+<         enddo
+<         enddo
+<         enddo
+<         if(dowr) write(outfile,*)
+< 
+< #ifdef MPI
+<         ! this ensures that every processor has all parcel locations 
+<         ! and intrinsic properties
+<         call MPI_ALLREDUCE(MPI_IN_PLACE,haildata(1,1),9*nhailtrajs,MPI_REAL,MPI_MAX,MPI_COMM_WORLD,ierr)
+< #endif
+< 
+<         IF(axisymm.eq.1.or.ny.eq.1)THEN
+<           ! 170719,  for 2d setup (x,z), fix all y values:
+<           DO n=1,nhailtrajs
+<             haildata(n,haily) = 0.0
+<           ENDDO
+<         ENDIF
+<         IF(nx.eq.1)THEN
+<           ! 170719,  for 2d setup (y,z), fix all x values:
+<           DO n=1,nhailtrajs
+<             haildata(n,hailx) = 0.0
+<           ENDDO
+<         ENDIF
+< 
+<       ENDIF
+< 
+< 
+2005c1909
+<                         tha,th3d,qa,q3d,tkea,tke3d,pta,pt3d,pdata,haildata,&
+---
+>                         tha,th3d,qa,q3d,tkea,tke3d,pta,pt3d,pdata,         &
+2021d1924
+<       use hailcast_module, only : gethailtrajzs
+2056d1958
+<       real, intent(inout), dimension(nhailtrajs,nhvals) :: haildata
+2431,2459d2332
+<           enddo
+<         endif
+<       endif
+< 
+< !------------------------------------------------------------------
+< 
+<       if( ihailtraj.eq.1 .and. terrain_flag )THEN
+<         ! get terrain at hail trajectory locations:
+<         if( hailsig.ge.1 )then
+<           call gethailtrajzs(xh,uh,ruh,xf,yh,vh,rvh,yf,zs,haildata)
+<         else
+<           print *,'  invalid value for hailsig: ',hailsig
+<           call stopcm1
+<         endif
+<         if( .not. restarted )then
+<           ! 181022:  not a restart ... initialize sigma
+<           do n=1,nhailtrajs
+<             ! get sigma from z:
+<             ! (see Section 3 of "The governing equations for CM1", 
+<             !  http://www2.mmm.ucar.edu/people/bryan/cm1/cm1_equations.pdf)
+<             haildata(n,hailsig) = zt*(haildata(n,hailz)-haildata(n,hailzs))/(zt-haildata(n,hailzs))
+<           enddo
+<         else
+<           ! 181022:  this is a restart ... get z
+<           do n=1,nhailtrajs
+<             ! get z from sigma:
+<             ! (see Section 3 of "The governing equations for CM1", 
+<             !  http://www2.mmm.ucar.edu/people/bryan/cm1/cm1_equations.pdf)
+<             haildata(n,hailz) = haildata(n,hailzs) + haildata(n,hailsig)*((zt-haildata(n,hailzs))*rzt)
+init_physics.F
+init_surface.F
+init_terrain.F
+input.F
+75,78c75,76
+<               hailx,haily,hailz,hailu,hailv,hailw,haild,haildice,haildense,   &
+<               hailts,hailfw,hailvt,hailqice,hailqliq,hailtc,hailsec,hailzs,   &
+<               hailsig,hailitype,nql1,nql2,nqs1,nqs2,nnc1,nnc2,nvl1,nvl2,nzl1, &
+<               nzl2,nbudget,budrain,cm1setup,testcase,                         &
+---
+>               nql1,nql2,nqs1,nqs2,nnc1,nnc2,nvl1,nvl2,nzl1,nzl2,              &
+>               nbudget,budrain,cm1setup,testcase,                              &
+89c87
+<               iprcl,nparcels,ihailtraj,nhailtrajs,                            &
+---
+>               iprcl,nparcels,                                                 &
+91c89
+<               bc_temp,ibw,ibe,ibs,ibn,strlen,baselen,totlen,npvals,nhvals,    &
+---
+>               bc_temp,ibw,ibe,ibs,ibn,strlen,baselen,totlen,npvals,           &
+117,118d114
+<               hail_dice, hail_ts, hail_fw, hail_vt, hail_itype,   &
+<               hail_qice, hail_qliq, hail_tc, hail_u, hail_v, hail_w,          &
+125c121
+<               stat_pcn,stat_qsrc,stat_out,prcl_out,hail_out,                  &
+---
+>               stat_pcn,stat_qsrc,stat_out,prcl_out,                           &
+152c148
+<            tapfrq,rstfrq,statfrq,prclfrq,hailfrq,turbfrq,azimavgfrq,hifrqfrq, &
+---
+>            tapfrq,rstfrq,statfrq,prclfrq,turbfrq,azimavgfrq,hifrqfrq,         &
+176c172
+<            ddr,rlen,centerx,centery,hail_start
+---
+>            ddr,rlen,centerx,centery
+195,196c191
+<            time_parcels,time_hailtrajs,time_rad,time_pbl,            &
+<            time_swath,time_pdef,      &
+---
+>            time_parcels,time_rad,time_pbl,time_swath,time_pdef,      &
+206c201
+<                         tapfrq,rstfrq,statfrq,prclfrq,hailfrq
+---
+>                         tapfrq,rstfrq,statfrq,prclfrq
+218c213
+<           iprcl,nparcels,ihailtraj,nhailtrajs
+---
+>           iprcl,nparcels
+276,278d270
+<       namelist /param17/                                                      &
+<               hail_start,hail_dice, hail_ts, hail_fw, hail_itype, hail_vt,    &
+<               hail_qice, hail_qliq, hail_tc, hail_u, hail_v, hail_w
+interp_routines.F
+irrad3d.F
+kessler.F
+lfoice.F
+maxmin.F
+misclibs.F
+534,537c534,535
+<                           mtime,stattim,taptim,rsttim,prcltim,hailtrajtim,              &
+<                           turbtim,azimavgtim,       &
+<                           dorestart,dowriteout,dostat,doprclout,dohailout,              &
+<                           dotdwrite,doazimwrite,  &
+---
+>                           mtime,stattim,taptim,rsttim,prcltim,turbtim,azimavgtim,       &
+>                           dorestart,dowriteout,dostat,doprclout,dotdwrite,doazimwrite,  &
+550,553c548,549
+<       double precision, intent(in) :: mtime,stattim,taptim,rsttim,prcltim,hailtrajtim,&
+<         turbtim,azimavgtim
+<       logical, intent(in) :: dorestart,dowriteout,dostat,doprclout,dohailout,&
+<         dotdwrite,doazimwrite
+---
+>       double precision, intent(in) :: mtime,stattim,taptim,rsttim,prcltim,turbtim,azimavgtim
+>       logical, intent(in) :: dorestart,dowriteout,dostat,doprclout,dotdwrite,doazimwrite
+3523d3518
+<       time_hailtrajs=0.0
+module_mp_nssl_2mom.F
+module_mp_radar.F
+module_ra_etc.F
+module_ra_rrtmg_lw.F
+module_ra_rrtmg_sw.F
+morrison.F
+oml.F
+param.F
+11d10
+<                        hailtrajtim, &
+62c61
+<       double precision :: stattim,taptim,rsttim,radtim,prcltim,hailtrajtim
+---
+>       double precision :: stattim,taptim,rsttim,radtim,prcltim
+201,203d199
+<       if( ihailtraj.eq.1 ) then
+<         read(20,nml=param17)
+<       endif
+219d214
+<       call MPI_BCAST(hailfrq,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
+280,281d274
+<       call MPI_BCAST(ihailtraj,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+<       call MPI_BCAST(nhailtrajs ,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+513,522d505
+<       call MPI_BCAST(hail_start  ,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
+<       call MPI_BCAST(hail_dice   ,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+<       call MPI_BCAST(hail_ts     ,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+<       call MPI_BCAST(hail_fw     ,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+<       call MPI_BCAST(hail_vt     ,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+<       call MPI_BCAST(hail_itype  ,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+<       call MPI_BCAST(hail_qice   ,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+<       call MPI_BCAST(hail_qliq   ,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+<       call MPI_BCAST(hail_tc     ,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+< 
+2199,2201d2181
+<       ! for hail
+<       nhailtrajs = max(1,nhailtrajs)
+< 
+2248d2227
+<       if(dowr) write(outfile,*) 'hailfrq   =',hailfrq
+5087d5065
+<       hailtrajtim=0.0
+5091d5068
+<       if( ihailtraj.le.0 ) hailtrajtim = 1.0d60
+5284,5387d5260
+< 
+< !--------------------------------------------------------------
+< 
+<       nhvals = 1
+< 
+<       hailx = 0
+<       haily = 0
+<       hailz = 0
+<       hailu = 0
+<       hailv = 0
+<       hailw = 0
+<       haild = 0
+<       haildice = 0
+<       haildense = 0
+<       hailts = 0
+<       hailfw = 0
+<       hailitype = 0
+<       hailvt = 0
+<       hailqice = 0
+<       hailqliq = 0
+<       hailtc = 0
+<       hailzs = 0
+<       hailsig = 0
+< 
+<       ! for hailtstones:
+<       if(ihailtraj.eq.1)then
+< 
+<         ! 9 basic variables for all simulations:
+<         ! (x,y,z,u,v,w,d,dense,vt,ts,fw,itype)
+<         !  1 2 3 4 5 6 7 8     9  10 11 12
+<         nhvals = 12
+< 
+<         hailx = 1
+<         haily = 2
+<         hailz = 3
+<         hailu = 4
+<         hailv = 5
+<         hailw = 6
+<         haild = 7       !diameter (**m**)
+<         haildense = 8   !density  (kg/m3)
+<         hailvt = 9      !terminal velocity  (m/s)
+<         hailts = 10     !hailstone temperature  (K)
+<         hailfw = 11     !hailstone water fraction
+<         hailitype = 12  !wet or dry growth mode
+< 
+<         !Ice-only diameter
+<         if( hail_dice.eq.1 )then
+<           nhvals = nhvals+1
+<           haildice = nhvals
+<         endif
+<         !ice mixing ratio (qi + qs) in cloud at hailstone location
+<         if( hail_qice.eq.1 )then
+<           nhvals = nhvals+1
+<           hailqice = nhvals
+<         endif
+<         !liquid mixing ratio (qc) in cloud at hailstone location
+<         if( hail_qliq.eq.1 )then
+<           nhvals = nhvals+1
+<           hailqliq = nhvals
+<         endif
+<         !in-cloud temperature at hailstone location
+<         if( hail_tc.eq.1 )then
+<           nhvals = nhvals+1
+<           hailtc = nhvals
+<         endif
+<         if( terrain_flag )then
+<           nhvals = nhvals+1
+<           hailzs = nhvals
+<           nhvals = nhvals+1
+<           hailsig = nhvals
+<         endif
+<         
+<         !Double-check hail_start is a reasonable value.
+<         if (hail_start.lt.0) hail_start = 0.
+< 
+<       else
+< 
+<         nhailtrajs = 1
+< 
+<       endif
+< 
+<       if(dowr) write(outfile,*)
+<       if(dowr) write(outfile,*) '  nhailtrajs = ',nhailtrajs
+<       if(dowr) write(outfile,*) '  nhvals     = ',nhvals
+<       if(dowr) write(outfile,*) '  hailx      = ',hailx
+<       if(dowr) write(outfile,*) '  haily      = ',haily
+<       if(dowr) write(outfile,*) '  hailz      = ',hailz
+<       if(dowr) write(outfile,*) '  hailu      = ',hailu
+<       if(dowr) write(outfile,*) '  hailv      = ',hailv
+<       if(dowr) write(outfile,*) '  hailw      = ',hailw
+<       if(dowr) write(outfile,*) '  haild      = ',haild
+<       if(dowr) write(outfile,*) '  haildense  = ',haildense
+<       if(dowr) write(outfile,*) '  haildice   = ',haildice
+<       if(dowr) write(outfile,*) '  hailts     = ',hailts
+<       if(dowr) write(outfile,*) '  hailfw     = ',hailfw
+<       if(dowr) write(outfile,*) '  hailitype  = ',hailitype
+<       if(dowr) write(outfile,*) '  hailvt     = ',hailvt
+<       if(dowr) write(outfile,*) '  hailqice   = ',hailqice
+<       if(dowr) write(outfile,*) '  hailqliq   = ',hailqliq
+<       if(dowr) write(outfile,*) '  hailtc     = ',hailtc
+<       if(dowr) write(outfile,*) '  hailzs     = ',hailzs
+<       if(dowr) write(outfile,*) '  hailsig    = ',hailsig
+<       if(dowr) write(outfile,*)
+< 
+parcel.F
+pdcomp.F
+pdef.F
+poiss.F
+radiation_driver.F
+radlib3d.F
+radtrns3d.F
+restart.F
+15c15
+<                                stattim,taptim,rsttim,radtim,prcltim,hailtrajtim,    &
+---
+>                                stattim,taptim,rsttim,radtim,prcltim,                &
+32,33c32
+<                                qpten,qtten,qvten,qcten,pta,pdata,ploc,              &
+<                                haildata,hailloc,ppx,                                &
+---
+>                                qpten,qtten,qvten,qcten,pta,pdata,ploc,ppx,          &
+58c57
+<       double precision, intent(in) :: mtime,stattim,taptim,rsttim,radtim,prcltim,hailtrajtim
+---
+>       double precision, intent(in) :: mtime,stattim,taptim,rsttim,radtim,prcltim
+100,101d98
+<       real, intent(in), dimension(nhailtrajs,nhvals) :: haildata
+<       real, intent(inout), dimension(nhailtrajs,12) :: hailloc
+316d312
+<       write(50) hailtrajtim
+422,424d417
+<       call disp_err( nf90_inq_varid(ncid,"hailtrajtim",varid) , .true. )
+<       call disp_err( nf90_put_var(ncid,varid,hailtrajtim,(/time_index/)) , .true. )
+< 
+1179,1255d1171
+< !  hailstones:
+< 
+<       if(ihailtraj.eq.1)then
+<         !-----------------
+<         ! with hailstones:
+<         if(myid.eq.0)then
+<           if( restart_format.eq.1 )then
+<             write(50) nhailtrajs
+< #ifdef NETCDF
+<           elseif( restart_format.eq.2 )then
+<             call disp_err( nf90_inq_varid(ncid,"numhailtrajs",varid) , .true. )
+<             call disp_err( nf90_put_var(ncid,varid,nhailtrajs,(/time_index/)) , .true. )
+< #endif
+<           endif
+<         endif
+<         ! need position info as well as 9 additional internal characteristics:
+<         if(myid.eq.0)then
+<           if( .not. terrain_flag )then
+<             DO np=1,nhailtrajs
+<               hailloc(np,1)=haildata(np,hailx)
+<               hailloc(np,2)=haildata(np,haily)
+<               hailloc(np,3)=haildata(np,hailz)
+<               hailloc(np,4)=haildata(np,hailu)
+<               hailloc(np,5)=haildata(np,hailv)
+<               hailloc(np,6)=haildata(np,hailw)
+<               hailloc(np,7)=haildata(np,haild)
+<               hailloc(np,8)=haildata(np,haildense)
+<               hailloc(np,9)=haildata(np,hailvt)
+<               hailloc(np,10)=haildata(np,hailts)
+<               hailloc(np,11)=haildata(np,hailfw)
+<               hailloc(np,12)=haildata(np,hailitype)
+<             ENDDO
+<           else
+<             DO np=1,nhailtrajs
+<               hailloc(np,1)=haildata(np,hailx)
+<               hailloc(np,2)=haildata(np,haily)
+<               hailloc(np,3)=haildata(np,hailsig)
+<               hailloc(np,4)=haildata(np,hailu)
+<               hailloc(np,5)=haildata(np,hailv)
+<               hailloc(np,6)=haildata(np,hailw)
+<               hailloc(np,7)=haildata(np,haild)
+<               hailloc(np,8)=haildata(np,haildense)
+<               hailloc(np,9)=haildata(np,hailvt)
+<               hailloc(np,10)=haildata(np,hailts)
+<               hailloc(np,11)=haildata(np,hailfw)
+<               hailloc(np,12)=haildata(np,hailitype)
+<             ENDDO
+<           endif
+<           if( restart_format.eq.1 )then
+<             write(50) hailloc
+< #ifdef NETCDF
+<           elseif( restart_format.eq.2 )then
+< 
+<             call disp_err( nf90_inq_varid(ncid,"hailloc",varid) , .true. )
+<             n = 12
+<             call disp_err( nf90_put_var(ncid,varid,hailloc,(/1,1,time_index/),(/nhailtrajs,n,1/)) , .true. )
+< #endif
+<           endif
+<         endif
+<       else
+<         !-----------------
+<         ! without hailstones:
+<         if(myid.eq.0)then
+<           nvar = 0
+<           if( restart_format.eq.1 )then
+<             write(50) nvar
+< #ifdef NETCDF
+<           elseif( restart_format.eq.2 )then
+<             call disp_err( nf90_inq_varid(ncid,"numhailtrajs",varid) , .true. )
+<             call disp_err( nf90_put_var(ncid,varid,nvar,(/time_index/)) , .true. )
+< #endif
+<           endif
+<         endif
+<         !-----------------
+<       endif
+< 
+< !---------------------------------------------------------------
+1548,1559c1464
+<         IF( restart_format.eq.1 )THEN
+<             write(50) nwriteh
+< #ifdef NETCDF
+<         ELSEIF( restart_format.eq.2 )then
+<               ncstatus = nf90_put_var(ncid,varid,nwriteh,(/time_index/))
+<               if(ncstatus.ne.nf90_noerr)then
+<                 print *,'  Error in nwriteh'
+<                 print *,nf90_strerror(ncstatus)
+<                 call stopcm1
+<               endif
+<         ENDIF
+< #endif
+---
+>         write(50) nwriteh
+1600c1505
+<                               stattim,taptim,rsttim,radtim,prcltim,hailtrajtim,    &
+---
+>                               stattim,taptim,rsttim,radtim,prcltim,                &
+1617,1619c1522,1523
+<                               qpten,qtten,qvten,qcten,pta,pdata,ploc,              &
+<                               haildata,hailloc,                                    &
+<                               ppx,tdiag,qdiag,phi1,phi2,                           &
+---
+>                               qpten,qtten,qvten,qcten,pta,pdata,ploc,ppx,          &
+>                               tdiag,qdiag,phi1,phi2,                               &
+1621,1622c1525
+<                               dum1,dat1,dat2,dat3,reqt,restarted,restart_prcl,     &
+<                               restart_hail)
+---
+>                               dum1,dat1,dat2,dat3,reqt,restarted,restart_prcl)
+1644c1547
+<       double precision, intent(inout) :: mtime,stattim,taptim,rsttim,radtim,prcltim,hailtrajtim
+---
+>       double precision, intent(inout) :: mtime,stattim,taptim,rsttim,radtim,prcltim
+1686,1687d1588
+<       real, intent(inout), dimension(nhailtrajs,nhvals) :: haildata
+<       real, intent(inout), dimension(nhailtrajs,12) :: hailloc
+1700c1601
+<       logical, intent(inout) :: restart_prcl, restart_hail
+---
+>       logical, intent(inout) :: restart_prcl
+1709c1610
+<       real, dimension(:,:), allocatable :: pfoo, hfoo
+---
+>       real, dimension(:,:), allocatable :: pfoo
+1917d1817
+<       read(50) hailtrajtim
+2023,2025d1922
+<       call disp_err( nf90_inq_varid(ncid,"hailtrajtim",varid) , .true. )
+<       call disp_err( nf90_get_var(ncid,varid,hailtrajtim,(/time_index/)) , .true. )
+< 
+2075d1971
+<       call MPI_BCAST(hailtrajtim,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+2855,2993d2750
+< !  hailstones:
+< 
+<       if( myid.eq.0 )then
+<         if( restart_format.eq.1 )then
+<           read(50) nvar
+< #ifdef NETCDF
+<         elseif( restart_format.eq.2 )then
+<           call disp_err( nf90_inq_varid(ncid,"numhailtrajs",varid) , .true. )
+<           call disp_err( nf90_get_var(ncid,varid,nvar,(/time_index/)) , .true. )
+<           if( ihailtraj.eq.0 ) nvar = 0
+< #endif
+<         endif
+<         print *,'  nvar_hailtrajs = ',nvar
+<       endif
+< 
+< #ifdef MPI
+<       call MPI_BCAST(nvar,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+< #endif
+< 
+<       if( ihailtraj.eq.1 .or. nvar.gt.0 )then
+<         if( nvar.gt.0 )then
+<           ! unlike parcels, need position info and internal hailstone characteristics:
+<           !  u,v,w, d, dense, vt, ts, fw, itype.  12 in total
+<           if( myid.eq.0 )then
+<             IF( nvar.eq.nhailtrajs )THEN
+<               ! easy:  restart file matches current config
+< 
+<               if( restart_format.eq.1 )then
+<                 read(50) hailloc
+< #ifdef NETCDF
+<               elseif( restart_format.eq.2 )then
+<                 call disp_err( nf90_inq_varid(ncid,"hailloc",varid) , .true. )
+<                 n = 12
+<                 call disp_err( nf90_get_var(ncid,varid,hailloc,(/1,1,time_index/),(/nhailtrajs,n,1/)) , .true. )
+< #endif
+<               endif
+<             ELSE
+<               ! annoying:  restart file has different nparcels than current config
+<               IF( ihailtraj.eq.1 )THEN
+<                 if( .not. terrain_flag )then
+<                   do np=1,nhailtrajs
+<                     hailloc(np,1) = haildata(np,hailx)
+<                     hailloc(np,2) = haildata(np,haily)
+<                     hailloc(np,3) = haildata(np,hailz)
+<                     hailloc(np,4) = haildata(np,hailu)
+<                     hailloc(np,5) = haildata(np,hailv)
+<                     hailloc(np,6) = haildata(np,hailw)
+<                     hailloc(np,7) = haildata(np,haild)
+<                     hailloc(np,8) = haildata(np,haildense)
+<                     hailloc(np,9) = haildata(np,hailvt)
+<                     hailloc(np,10) = haildata(np,hailts)
+<                     hailloc(np,11) = haildata(np,hailfw)
+<                     hailloc(np,12) = haildata(np,hailitype)
+<                   enddo
+<                 else
+<                   do np=1,nhailtrajs
+<                     hailloc(np,1) = haildata(np,hailx)
+<                     hailloc(np,2) = haildata(np,haily)
+<                     hailloc(np,3) = haildata(np,hailsig)
+<                     hailloc(np,4) = haildata(np,hailu)
+<                     hailloc(np,5) = haildata(np,hailv)
+<                     hailloc(np,6) = haildata(np,hailw)
+<                     hailloc(np,7) = haildata(np,haild)
+<                     hailloc(np,8) = haildata(np,haildense)
+<                     hailloc(np,9) = haildata(np,hailvt)
+<                     hailloc(np,10) = haildata(np,hailts)
+<                     hailloc(np,11) = haildata(np,hailfw)
+<                     hailloc(np,12) = haildata(np,hailitype)
+<                   enddo
+<                 endif
+<              ENDIF
+<               if( myid.eq.0 ) print *,'  start hfoo ' 
+<               allocate( hfoo(nvar,12) )
+<               if( restart_format.eq.1 )then
+<                 read(50) hfoo
+< #ifdef NETCDF
+<               elseif( restart_format.eq.2 )then
+<                 call disp_err( nf90_inq_varid(ncid,"hloc",varid) , .true. )
+<                 n = 12
+<                 call disp_err( nf90_get_var(ncid,varid,hfoo,(/1,1,time_index/),(/nvar,n,1/)) , .true. )
+< #endif
+<               endif
+<               IF( ihailtraj.eq.1 )THEN
+<                 do n=1,12
+<                 do np=1,min(nvar,nhailtrajs)
+<                   hailloc(np,n) = hfoo(np,n)
+<                 enddo
+<                 enddo
+<               ENDIF
+<               deallocate( hfoo )
+<               if( myid.eq.0 ) print *,'  end hfoo ' 
+<             ENDIF !nvar .eq. nhailtrajs
+<           endif !myid .eq. 0
+<           IF( ihailtraj.eq.1 )THEN
+< #ifdef MPI
+<             call MPI_BCAST(hailloc,12*nparcels,MPI_REAL,0,MPI_COMM_WORLD,ierr)
+< #endif
+<             if( .not. terrain_flag )then
+<               DO np=1,nhailtrajs
+<                 haildata(np,hailx)=hailloc(np,1)
+<                 haildata(np,haily)=hailloc(np,2)
+<                 haildata(np,hailz)=hailloc(np,3)
+<                 haildata(np,hailu)=hailloc(np,4)
+<                 haildata(np,hailv)=hailloc(np,5)
+<                 haildata(np,hailw)=hailloc(np,6)
+<                 haildata(np,haild)=hailloc(np,7)
+<                 haildata(np,haildense)=hailloc(np,8)
+<                 haildata(np,hailvt)=hailloc(np,9)
+<                 haildata(np,hailts)=hailloc(np,10)
+<                 haildata(np,hailfw)=hailloc(np,11)
+<                 haildata(np,hailitype)=hailloc(np,12)
+<               ENDDO
+<             else
+<               DO np=1,nhailtrajs
+<                 haildata(np,hailx)=hailloc(np,1)
+<                 haildata(np,haily)=hailloc(np,2)
+<                 haildata(np,hailsig)=hailloc(np,3)
+<                 haildata(np,hailu)=hailloc(np,4)
+<                 haildata(np,hailv)=hailloc(np,5)
+<                 haildata(np,hailw)=hailloc(np,6)
+<                 haildata(np,haild)=hailloc(np,7)
+<                 haildata(np,haildense)=hailloc(np,8)
+<                 haildata(np,hailvt)=hailloc(np,9)
+<                 haildata(np,hailts)=hailloc(np,10)
+<                 haildata(np,hailfw)=hailloc(np,11)
+<                 haildata(np,hailitype)=hailloc(np,12)
+<               ENDDO
+<             endif
+<             restart_hail = .true.
+<           ENDIF
+<         else !nvar .lt. 0
+<           if( myid.eq.0 ) print *
+<           if( myid.eq.0 ) print *,'  Note:  no hailstone data in the restart file '
+<           if( myid.eq.0 ) print *
+<           restart_hail = .false.
+<         endif !nvar check
+<       endif !nhailtraj check
+< 
+< !---------------------------------------------------------------
+3179,3190c2936
+<         IF (restart_format.eq.1)then
+<             read(50) nwriteh
+< #ifdef NETCDF
+<         ELSEIF( restart_format.eq.2 )then
+<             ncstatus = nf90_get_var(ncid,varid,nwriteh,(/time_index/))
+<             if(ncstatus.ne.nf90_noerr)then
+<                 print *,'  Error in nwriteh'
+<                 print *,nf90_strerror(ncstatus)
+<                 call stopcm1
+<             endif
+<         ENDIF
+< #endif
+---
+>         read(50) nwriteh
+3192d2937
+< 
+3224d2968
+<       if(dowr) write(outfile,*) '   hailtrajtim = ',hailtrajtim
+sfclay.F
+sfclayrev.F
+sfcphys.F
+singleton.F
+slab.F
+solve.F
+111c111
+<                    pta,pt3d,ptten,pdata,haildata,                    &
+---
+>                    pta,pt3d,ptten,pdata,                             &
+158d157
+<       use hailcast_module, only : hailcast_driver
+245d243
+<       real, intent(inout), dimension(nhailtrajs,nhvals) :: haildata
+315,317d312
+<       
+<       !HAILCAST arrays: temperature, cloud water, water vapor, cloud ice and snow
+<       real, dimension(ib:ie,jb:je,kb:ke) :: foo3, foo4, foo5, foo6
+2489c2484
+<       if( ((iprcl.eq.1).or.(ihailtraj.eq.1)) .and. nrk.eq.nrkmax )then
+---
+>       if( iprcl.eq.1 .and. nrk.eq.nrkmax )then
+2500d2494
+< 
+4011d4004
+< !  also need them for hailstone trajectories
+4013,4014c4006
+<       !IF((iprcl.eq.1) .OR. (ihailtraj.eq.1)) THEN
+<       IF((iprcl.eq.1) .OR. ((ihailtraj.eq.1).AND.(mtime.ge.hail_start))) THEN
+---
+>       IF(iprcl.eq.1)THEN
+4069,4074c4061
+<         if(timestats.ge.1) THEN
+<             if (iprcl.eq.1) time_parcels=time_parcels+mytime()
+<             !if ((ihailtraj.eq.1).AND.(iprcl.eq.0)) &
+<             if ((mtime.ge.hail_start).AND.(ihailtraj.eq.1).AND.(iprcl.eq.0)) &
+<                  time_hailtrajs=time_hailtrajs+mytime()
+<         endif
+---
+>         if(timestats.ge.1) time_parcels=time_parcels+mytime()
+4361,4421d4347
+<       ENDIF
+< 
+< 
+< 
+< !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+< !cc  Update HAILCAST hail stone trajectory locations  ccccccccccccccc
+< !cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+<       
+<       if (myid.eq.0) print *, 'HAILCAST, mtime, hail_start: ', mtime, hail_start
+<       !had errors with this formulation.  Moving mtime check inside
+<       ! hail module.
+<       IF((ihailtraj.eq.1).AND.(mtime.ge.hail_start))THEN
+<         
+<       !IF((ihailtraj.eq.1)) THEN
+<         
+<         
+<         !  get corner info, ghost zone data, etc:
+<         !  (may not parallelize correctly if this is not done)
+< #ifdef MPI
+<         call comm_3u_end( rru,uw31,uw32,ue31,ue32,us31,us32,un31,un32,reqs_u)
+<         call comm_3v_end( rrv,vw31,vw32,ve31,ve32,vs31,vs32,vn31,vn32,reqs_v)
+<         call comm_3w_end( rrw,ww31,ww32,we31,we32,ws31,ws32,wn31,wn32,reqs_w)
+<         call getcorneru3(rru,n3w1(1,1,1),n3w2(1,1,1),n3e1(1,1,1),n3e2(1,1,1),  &
+<                              s3w1(1,1,1),s3w2(1,1,1),s3e1(1,1,1),s3e2(1,1,1))
+<         call getcornerv3(rrv,n3w1(1,1,1),n3w2(1,1,1),n3e1(1,1,1),n3e2(1,1,1),  &
+<                              s3w1(1,1,1),s3w2(1,1,1),s3e1(1,1,1),s3e2(1,1,1))
+<         call getcornerw3(rrw,n3w1,n3w2,n3e1,n3e2,s3w1,s3w2,s3e1,s3e2)
+<         call bcu2(rru)
+<         call bcv2(rrv)
+<         call bcw2(rrw)
+< #endif
+< 
+<         if(terrain_flag)then
+<           ! Feel free to modify the above parcel code to make the hail
+<           ! trajectories work with terrain.  
+<         endif  
+< 
+< 
+<           !$omp parallel do default(shared)  &
+<           !$omp private(i,j,k)
+<           do k=1,nk
+<           do j=1,nj
+<           do i=1,ni
+<             !calculate temperature, cloud water, water vapor, cloud ice and snow
+<             foo3(i,j,k)=(th0(i,j,k)+th3d(i,j,k))*(pi0(i,j,k)+ppi(i,j,k))
+<             foo4(i,j,k)=q3d(i,j,k,nql1)
+<             foo5(i,j,k)=q3d(i,j,k,nqv)
+<             !Probably need to have a check here to see if there's ice in the 
+<             ! microphysics scheme
+<             foo6(i,j,k)=q3d(i,j,k,nqs1) + q3d(i,j,k,nqs2)
+<           enddo
+<           enddo
+<           enddo
+< 
+<         call     hailcast_driver(dt,xh,uh,ruh,xf,yh,vh,rvh,yf,zh,mh,rmh,     &
+<                     zf,mf,zs,sigma,sigmaf,znt,                               &
+<                     foo3,rho,prs,foo5,foo6,foo4,rru,rrv,rrw,haildata,        &
+<                     pw1,pw2,pe1,pe2,ps1,ps2,pn1,pn2,        &
+<                     nw1,nw2,ne1,ne2,sw1,sw2,se1,se2,reqs_p, &
+<                     tkw1,tkw2,tke1,tke2,tks1,tks2,tkn1,tkn2)
+<         if(timestats.ge.1) time_hailtrajs=time_hailtrajs+mytime()
+sorad3d.F
+soundcb.F
+sounde.F
+sound.F
+soundns.F
+statpack.F
+stopcm1.F
+testcase_simple_phys.F
+thompson.F
+turbdiag.F
+turb.F
+writeout.F
+writeout_nc.F
+9c9
+<             write2d_nc,write3d_nc,writehaildata_nc
+---
+>             write2d_nc,write3d_nc
+581c581
+<     integer :: nbudgetid,numqid,plocid,nparcelsid,nhailtrajsid,haillocid
+---
+>     integer :: nbudgetid,numqid,plocid,nparcelsid
+686,691d685
+<     if( ihailtraj.eq.1 )then
+<       n =12 
+<       call disp_err( nf90_def_dim(ncid,'nhailloc',n,haillocid) , .true. )
+<       n = max( 1 , nhailtrajs )
+<       call disp_err( nf90_def_dim(ncid,'nhailtrajs',n,nhailtrajsid) , .true. )
+<     endif
+756d749
+<       call disp_err( nf90_def_var(ncid,"numhailtrajs",nf90_int,(/timeid/),varid) , .true. )
+781d773
+<       call disp_err( nf90_def_var(ncid,"hailtrajtim" ,nf90_double,(/timeid/),varid) , .true. )
+1158,1161d1149
+<     if( ihailtraj.eq.1 )then
+<       call disp_err( nf90_def_var(ncid,"hailloc"    ,nf90_float,(/nhailtrajsid,haillocid,timeid/),varid) , .true. )
+<     endif
+< 
+1828,1974d1815
+< 
+< !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+< !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+< !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+< 
+<       subroutine writehaildata_nc(hrec,rtime,qname,name_hail,desc_hail,unit_hail,haildata,&
+<         haildata2)
+<       use input
+<       use netcdf
+<       implicit none
+< 
+<       integer, intent(inout) :: hrec
+<       real, intent(in) :: rtime
+<       character(len=3), intent(in), dimension(maxq) :: qname
+<       character(len=40), intent(in), dimension(maxvars) :: name_hail,desc_hail,unit_hail
+<       real, intent(in), dimension(nhailtrajs,nhvals) :: haildata
+<       real, intent(inout), dimension(nhailtrajs) :: haildata2
+< 
+<       integer :: ncid,status,dimid,varid,time_index,n,n2,np,timeid,tfile,xid
+<       integer :: npid,yhid,zhid
+<       logical :: allinfo
+< 
+< !-----------------------------------------------------------------------
+< 
+< 
+<     string(totlen+1:totlen+22) = '_haildata.nc             '
+< 
+<     allinfo = .false.
+<     IF(hrec.eq.1) allinfo=.true.
+< 
+<     IF( hrec.ne.1 )THEN
+<       ! cm1r18:  Try to open file.
+<       !          If error, set prec to 1 and write all info.
+<       status = nf90_open( path=string , mode=nf90_write , ncid=ncid )
+<       if( status.eq.nf90_noerr )then
+<         ! no error, file exists.  Get number of time levels in file:
+<         call disp_err( nf90_inq_dimid(ncid,'time',timeid) , .true. )
+<         call disp_err( nf90_inquire_dimension(ncid=ncid,dimid=timeid,len=tfile), .true. )
+<         if( (tfile+1).lt.hrec )then
+< !!!          if(myid.eq.0) print *,'  tfile,prec = ',tfile,prec
+<           hrec = tfile+1
+<         endif
+<       else
+<         ! if error opening file, then write all info:
+<         if(myid.eq.0) print *,'  status = ',status
+< !!!        if(myid.eq.0) print *,nf90_strerror(status)
+<         allinfo = .true.
+<         hrec = 1
+<       endif
+<     ENDIF
+< 
+< 
+< 
+<   allinfo3:  IF( allinfo )THEN
+<     ! Definitions/descriptions:
+< 
+< #ifdef NCFPLUS
+< !--- works with netcdf 4.2, but not 4.0 (grumble)
+<       call disp_err( nf90_create( path=string , cmode=IOR(nf90_netcdf4, nf90_classic_model) , ncid=ncid ) , .true. )
+< #else
+<       ! must do this for netcdf 4.0 (it seems) !
+<       call disp_err( nf90_create(path=string,cmode=0,ncid=ncid) , .true. )
+< #endif
+< 
+<     call disp_err( nf90_def_dim(ncid,"xh",nhailtrajs,npid) , .true. )
+<     call disp_err( nf90_def_dim(ncid,"yh",1,yhid) , .true. )
+<     call disp_err( nf90_def_dim(ncid,"zh",1,zhid) , .true. )
+<     call disp_err( nf90_def_dim(ncid,"time",nf90_unlimited,timeid) , .true. )
+< 
+<     call disp_err( nf90_def_var(ncid,"xh",nf90_float,(/npid/),varid) , .true. )
+<     call disp_err( nf90_put_att(ncid,varid,"long_name","west-east location ... actually, really hailstone ID number") , .true. )
+<     call disp_err( nf90_put_att(ncid,varid,"units","degree_east") , .true. )
+< 
+<     call disp_err( nf90_def_var(ncid,"yh",nf90_float,(/yhid/),varid) , .true. )
+<     call disp_err( nf90_put_att(ncid,varid,"long_name","south-north location") , .true. )
+<     call disp_err( nf90_put_att(ncid,varid,"units","degree_north") , .true. )
+< 
+<     call disp_err( nf90_def_var(ncid,"zh",nf90_float,(/zhid/),varid) , .true. )
+<     call disp_err( nf90_put_att(ncid,varid,"long_name","height") , .true. )
+<     call disp_err( nf90_put_att(ncid,varid,"units","m") , .true. )
+< 
+<     call disp_err( nf90_def_var(ncid,"time",nf90_float,(/timeid/),varid) , .true. )
+<     call disp_err( nf90_put_att(ncid,varid,"long_name","time") , .true. )
+<     call disp_err( nf90_put_att(ncid,varid,"units","seconds") , .true. )
+< 
+< 
+<   !---------------------------------------------------------------------------!
+< 
+<     ! use "_hail" arrays, which are defined in hail.F
+< 
+<       prclloop:  &
+<       do n = 1,hail_out
+<         !if(myid.eq.0) print *,'hailcast_variables: ',n,trim(name_hail(n))
+<         call disp_err( nf90_def_var(ncid,trim(name_hail(n)),nf90_float,(/npid,timeid/),varid) , .true. )
+<         call disp_err( nf90_put_att(ncid,varid,"long_name",trim(desc_hail(n))) , .true. )
+<         call disp_err( nf90_put_att(ncid,varid,"units",trim(unit_hail(n))) , .true. )
+< #ifdef NCFPLUS
+<         call disp_err( NF90_DEF_VAR_CHUNKING(ncid,varid,NF90_CHUNKED,(/nhailtrajs,1/)) , .true. )
+< #endif
+<       enddo  prclloop
+< 
+<   !---------------------------------------------------------------------------!
+< 
+<     call disp_err( nf90_put_att(ncid,NF90_GLOBAL,'cm1 version','cm1r19.1') , .true. )
+<     call disp_err( nf90_put_att(ncid, NF90_GLOBAL, 'Conventions','COARDS') , .true. )
+< 
+<     call disp_err( nf90_enddef(ncid) , .true. )
+< 
+<   do np=1,nhailtrajs
+<     call disp_err( nf90_put_var(ncid,npid,float(np),(/np/)) , .true. )
+<   enddo
+<     call disp_err( nf90_put_var(ncid,yhid,0.0) , .true. )
+<     call disp_err( nf90_put_var(ncid,zhid,0.0) , .true. )
+< 
+< !------------------------
+< 
+<   ENDIF  allinfo3
+< 
+<       ! Write data:
+< 
+<       time_index = hrec
+< 
+<       call disp_err( nf90_inq_varid(ncid,'time',timeid) , .true. )
+<       call disp_err( nf90_put_var(ncid,timeid,rtime,(/time_index/)) , .true. )
+< 
+<       call disp_err( nf90_inq_varid(ncid,'x',xid) , .true. )
+< 
+<       DO n=1,hail_out
+<         call disp_err( nf90_inq_varid(ncid,trim(name_hail(n)),varid) , .true. )
+<         do np=1,nhailtrajs
+<           haildata2(np) = haildata(np,n)
+<         enddo
+<         !print *, 'MAX ', name_hail(n), MAXVAL(haildata2)
+<         !print *, '53,70,5 km ', name_hail(n), haildata2(1)
+<         call disp_err( nf90_put_var(ncid,varid,haildata2,(/1,time_index/),(/nhailtrajs,1/)) , .true. )
+<       ENDDO
+< 
+<       ! close file
+< 
+<       call disp_err( nf90_close(ncid) , .true. )
+< 
+<       hrec = hrec + 1
+< 
+<       ! all done
+< 
+< 
+<       end subroutine writehaildata_nc
+ysu.F
