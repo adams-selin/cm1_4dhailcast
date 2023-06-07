@@ -2,7 +2,7 @@
 
 This code is a four-dimensional, fully integrated version of the Adams-Selin and Ziegler 2016 hail trajectory model in version 19.8 of CM1.
 
-**Please cite the following reference**: *Adams-Selin, R.D., 2022: A three-dimensional trajectory clustering technique. Mon. Wea. Rev., submitted.*
+**Please cite the following reference**: *Adams-Selin, R.D., 2023: A three-dimensional trajectory clustering technique. Mon. Wea. Rev., Early Online Release, https://doi.org/10.1175/MWR-D-22-0345.1.*
  
 ## Implementation details
 
