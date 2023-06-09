@@ -2288,7 +2288,7 @@
             !FW = (FW*GM + DMLT) / GM
             !units fix RAS 20220318
             DMLT = SEKDEL * (2.*PI*DCM*AH*AK*TCC + 2.*PI*DCM*AE*ALV*DI*DELRWC + &
-                    DGMWC/SEKDEL*CW*TCC) * SEKDEL / ALF
+                    DGMWC/SEKDEL*CW*TCC) / ALF
             FW = (FW*GM1C + DMLT + DGMWC) / GMC
          ENDIF
          
