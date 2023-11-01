@@ -196,8 +196,8 @@
  &param9
  output_path      = './',
  output_basename  = 'cm1out',
- output_format    = 1,
- output_filetype  = 1,
+ output_format    = 2,
+ output_filetype  = 2,
  output_interp    = 0,
  output_rain      = 1,
  output_sws       = 1,
