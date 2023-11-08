@@ -6,8 +6,6 @@ This code is a four-dimensional, fully integrated version of the Adams-Selin and
  
 ## Implementation details
 
-I’ve included a sample namelist in the run directory as well as a cm1out_haildata.nc file so you can get an idea of how the output data is structured.  The only recommendation I have for run time is to keep the model timestep (dtl) low, around a second, to avoid instabilities.
-
 A few differences with the ASZ16 hail trajectory model: this subroutine allows for melting at every timestep.  If inside cloud, the melting is
 determined via the RH87 heat balance equation. If outside or below cloud, melting is determined using Eq. 3 of Goyer et al. (1969), assuming a  spherical hailstone melting in dry air. This replaces the mean below- cloud melting calculations performed in ASZ16.
 
@@ -45,8 +43,19 @@ Finally, **the implementation of this code for sigma vertical coordinates is not
 * hail_u: output environmental u wind
 * hail_v: output environmental v wind
 * hail_w: output environmental w wind
-
  
 Hail diameter, density, x, y, z location, and itype (if in wet or dry growth),  are always output.
  
 For additional documentation, see George Bryan’s README for his parcel code (README.parcel), or the main parts of the code itself in hail.F.
+
+## Run Instructions
+
+I’ve included a sample namelist in the run directory as well as the header of a cm1out_haildata.nc file so you can get an idea of how the output data is structured.  I recommend keeping the model timestep (dtl) low, around a second, to avoid instabilities.
+
+Depending on what you are simulating, it is likely you won't want to initialize the hail embryos right at the simulation start, like parcels are. I've played around with adding a delayed start option to the namelist, but recommend instead the following:
+1. Compile the CM1 code with the number/locations of hail embryos you want declared in init3d.F.
+2. Start the model run with _no_ hail embryos (ihailtraj=0), and run the simulation until you a realistic looking storm has developed. Write out a restart file.
+3. Add the appropriate number of hail embryos/locations to the restart file, using the included python script add_hail_to_restart.py. Make sure these match what you coded in init3d.F.
+4. Start the model again with ihailtraj=1 and all other hail-related namelist parameters set. Run the model until all hail has fallen out (no more than 45-60 min).
+5. As desired, you can repeat steps 2-4 with incrementally later restart files. E.g., Run a no-hail simulation, write out a restart file at 60 min, add hail embryos, run for an hour. Write out a restart file from the no-hail simulation at 65 min, add hail embryos, run for an hour. Etc.
+
