@@ -1888,11 +1888,11 @@
       !!!  FOR HAILSTONE:  FIRST TEST IF STONE IS IN WET OR DRY GROWTH
       RATIO = 1./273.155
       IF(ITYPE.EQ.2) THEN !!WET GROWTH
-        ESAT=611.*EXP(ALV/RV*(RATIO-1./TS))
+        ESAT=611.*EXP(ALV/RV*(RATIO-1./TS)) !From (2.11) of RY89. Units Pa
       ELSE  !!DRY GROWTH
         ESAT=611.*EXP(ALS/RV*(RATIO-1./TS))
       ENDIF
-      RHOKOR=ESAT/(RV*TS)
+      RHOKOR=ESAT/(RV*TS) !kg /m3
       
       !!!  NOW FOR THE AMBIENT/IN-CLOUD CONDITIONS 
       ESATW=611.*EXP(ALV/RV*(RATIO-1./TC))
@@ -1904,7 +1904,7 @@
 
       !!!  CALC THE DIFFERENCE(KG/M3): <0 FOR CONDENSATION, 
       !!!  >0 FOR EVAPORATION
-      DELRW=(RHOKOR-RHOOMG) 
+      DELRW=(RHOKOR-RHOOMG) !hailstone - environment. Units kg/m3.
 
   END SUBROUTINE VAPORCLOSE
      
@@ -1918,7 +1918,7 @@
             
       IMPLICIT NONE
       REAL*8 D
-      REAL GM,GM1,GMW,GMI,DGM,DGMW,DGMI,DI,ANU,RE,AE,  &
+      REAL GM,GM1,GMW,GMI,DGM,DGMW,DGMI,DI,DI_SI,ANU,RE,AE,  &
                  TC,TS,P,DENSE,DENSA,FW,VT,XW,XI,SEKDEL,DELRW
       INTEGER ITYPE 
 
@@ -1933,10 +1933,16 @@
       REAL DENSAC, E, AFACTOR, NS, TSCELSIUS, VIMP, W
       PI=3.141592654
 
-      !!!  CALCULATE THE DIFFUSIVITY DI (m2/s)
-      D0=0.226*1.E-4  ! change to m2/s, not cm2/s
-      DI=D0*(TC/273.155)**1.81*(100000./P)
-  
+      !!!  CALCULATE THE DIFFUSIVITY DI 
+      !!D0=0.226*1.E-4  ! change to m2/s, not cm2/s
+      !!DI=D0*(TC/273.155)**1.81*(100000./P)
+      !Returning to RH87 Appendix A calculation for DI (their Dv).
+      ! They want temperature in K, pressure in hPa, and produces
+      ! results in cm2 s-1.
+      DI = 0.211(TC/273.15)**1.94 * (1013.25/(P*1E-2))  !cm2 s-1
+      DI_SI = DI * (1E-2)**2.  !m2 s-1, b/c multiplied by (1m/100cm)^2
+
+
       !!!  COLLECTION EFFICIENCY FOR WATER AND ICE 
       !EW=1.0      
       !!!!   IF TS WARMER THAN -5C THEN ACCRETE ALL THE ICE (EI=1.0) 
@@ -1960,14 +1966,16 @@
 
       !!!  CALCULATE THE VENTILATION COEFFICIENT - NEEDED FOR GROWTH FROM VAPOR
       !The coefficients in the ventilation coefficient equations have been 
-      !experimentally derived, and are expecting cal-C-g units.  Do some conversions.
-      DENSAC = DENSA * (1.E3) * (1.E-6)
-      !dynamic viscosity 
+      !experimentally derived, and are expecting cal-C-g units.  However,
+      !the Reynolds number is a ratio, so as long as all the units cancel
+      !we should be good.
+      !
+      !Dynamic viscosity 
       !ANU=1.717E-4*(393.0/(TC+120.0))*(TC/273.155)**1.5
       !RAS exponent fix to agree with Roger and Yau ps. 102
-      ANU=1.717E-5*(393.0/(TC+120.0))*(TC/273.155)**1.5        
-      !!!  CALCULATE THE REYNOLDS NUMBER - unitless
-      RE=D*VT*DENSAC/ANU   
+      ANU=1.717E-5*(393.0/(TC+120.0))*(TC/273.155)**1.5   !kg m-1 s-1     
+      !!!  CALCULATE THE REYNOLDS NUMBER - unitless, and all in SI units
+      RE=D*VT*DENSA/ANU   
       E=(0.60)**(0.333333333)*(RE**0.50) !ventilation coefficient vapor (fv)
       !!!   SELECT APPROPRIATE VALUES OF AE ACCORDING TO RE
       IF(RE.LT.6000.0)THEN
@@ -2007,7 +2015,7 @@
   
       !!! CALCULATE INCREASE IN MASS DUE TO SUBLIMATION/CONDENSATION OF 
       !!! WATER VAPOR
-      DGMV = SEKDEL*2*PI*D*AE*DI*DELRW
+      DGMV = SEKDEL*2*PI*D*AE*DI_SI*DELRW
       IF (DGMV .LT. 0) DGMV=0
 
       !!!  CALCULATE THE TOTAL MASS CHANGE 
@@ -2206,7 +2214,7 @@
       !TSCm1 = TSm1 - 273.155
       !TSCm2 = TSm2 - 273.155
       TCC = TC - 273.155
-      DELRWC = DELRW * (1.E3) * (1.E-6)
+      DELRWC = DELRW * (1.E3) * (1.E-6)  !kg/m3 --> g/cm3
       DENSAC = DENSA * (1.E3) * (1.E-6)
       !DI still in cm2/sec
       !RAS 20220318
@@ -2222,10 +2230,10 @@
       !!!  CALCULATE THE CONSTANTS 
       AK=(5.8+0.0184*TCC)*1.E-5  !thermal conductivity - cal/(cm*sec*K)
       !dynamic viscosity - calculated in MASSAGR
-      !ANU=1.717E-5*(393.0/(TC+120.0))*(TC/273.155)**1.5
+      !ANU=1.717E-5*(393.0/(TC+120.0))*(TC/273.155)**1.5 kg m-1 s-1
 
-      !!!  CALCULATE THE REYNOLDS NUMBER - unitless
-      !RE=D*VT*DENSAC/ANU  - calculated in MASSAGR  
+      !!!  CALCULATE THE REYNOLDS NUMBER - unitless. 
+      !RE=D*VT*DENSA/ANU  - calculated in MASSAGR, where all inputs are in SI units.
       
       H=(0.71)**(0.333333333)*(RE**0.50) !ventilation coefficient heat (fh)
       !E=(0.60)**(0.333333333)*(RE**0.50) !ventilation coefficient vapor (fv)
@@ -2287,7 +2295,12 @@
             !        DGMW/SEKDEL*CW*TCC) / ALF
             !FW = (FW*GM + DMLT) / GM
             !units fix RAS 20220318
-            DMLT = SEKDEL * (2.*PI*DCM*AH*AK*TCC + 2.*PI*DCM*AE*ALV*DI*DELRWC + &
+            !sign fix RAS 20231219 - when TCC is positive it means a flux of 
+            ! heat away from the hailstone. When DELRWC is positive, it means
+            ! a flux of vapor away from the hailstone, but that's a decrease
+            ! in temperature. Changed second term to a negative term.
+            !   
+            DMLT = SEKDEL * (2.*PI*DCM*AH*AK*TCC - 2.*PI*DCM*AE*ALV*DI*DELRWC + &
                     DGMWC/SEKDEL*CW*TCC) / ALF
             FW = (FW*GM1C + DMLT + DGMWC) / GMC
          ENDIF
@@ -2387,11 +2400,11 @@
       tclayer = TLAYER - 273.155
       a = 2.53E11
       b = 5.42E3
+      eps = 0.622
       tdclayer = b / LOG(a*eps / (rlayer*player))
       hplayer = player / 100.
       
       !Calculate partial vapor pressure
-      eps = 0.622
       eenv = (player*rlayer) / (rlayer+eps)
       eenv = eenv / 100.  !convert to mb
       
@@ -2455,7 +2468,7 @@
       essfc = 610.8*(exp((17.27*(t0-273.155))/  &
                (237.3 + (t0-273.155)))) ! es environment in Pa
       rhosfc = essfc/(rv*t0)
-      dsig = rhosenv - rhosfc
+      dsig = rhosenv - rhosfc  !kg /m3
 
       !Calculate new mass growth
       dmdt = (-1.7*pi*r*(re**0.5)/lf)*((ka*delt)+((lv-lf)*dv*dsig))
