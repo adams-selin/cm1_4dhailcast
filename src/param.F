@@ -521,6 +521,9 @@
       call MPI_BCAST(hail_qice   ,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
       call MPI_BCAST(hail_qliq   ,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
       call MPI_BCAST(hail_tc     ,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+      call MPI_BCAST(oblate_heat    ,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+      call MPI_BCAST(oblate_massagg ,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+      call MPI_BCAST(oblate_vt      ,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 
       IF ( ptype .ge. 26 ) THEN
       call MPI_BCAST(ccn       ,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
@@ -2400,6 +2403,10 @@
       if(dowr) write(outfile,*) 'var10     =',var10
       if(dowr) write(outfile,*)
 
+      if(dowr) write(outfile,*) 'oblate_heat       =',oblate_heat
+      if(dowr) write(outfile,*) 'oblate_massag     =',oblate_massagg
+      if(dowr) write(outfile,*) 'oblate_vt         =',oblate_vt
+      if(dowr) write(outfile,*)
 
       IF ( ptype >= 26 .and. dowr ) THEN
         write(outfile,NML=nssl2mom_params)

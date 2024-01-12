@@ -13,26 +13,30 @@ The CM1 parcel code was repurposed here for advecting the hailstones. Hailstones
 
 Due to the nature of hailstones, some of the largest trajectory speeds occur near the surface.  I had to add a check for below ground heights within the 1st rk loop, not just after the 2nd as in the parcel code.
 
-One possibility I haven't accounted for: I'm still allowing the hailstone to fall and be advected even if it has reached the edge of the domain. That could have an impact if it shot off the top, as it might eventually fall back down into the simulation and start growing again.  I'll see how much of a problem stratospheric hailstones are.
+One possibility I haven't accounted for: I'm still allowing the hailstone to fall and be advected even if it has reached the edge of the domain. That could have an impact if it shot off the top, as it might eventually fall back down into the simulation and start growing again.  Thus far, stratospheric hailstones don't seem to be much of a problem.
 
 Finally, **the implementation of this code for sigma vertical coordinates is not complete and should not be used.**
+
+For additional documentation, see George Bryan’s README for his parcel code (README.parcel), or the main parts of the code itself in hail.F.
 
 
 ## Namelist options
 
-&param1:  
+### &param1:  
 * hailfrq – Frequency to output hail data (s). The hail calculations are done every model timestep, but this value tells the model how frequently to output the information.  Set to a negative number to output every timestep.
  
-&param2:
+### &param2:
 
 * ihailtraj – turn on HAILCAST hail trajectories (1 = on)
 * nhailtrajs – total number of hailstones.
    Note:  you’ll have to define all initial embryo locations and sizes in init3d.F.  Make sure the number you are defining there matches nhailtrajs.
  
-&param9:
+### &param9:
 * output_format – this is the generic output_format namelist selector. The hail trajectory data follows this selection.
  
-&param17:  (new parameter section)
+### &param17:  (new section)
+
+#### Hail-related parameters to include in the output:
 * hail_dice: output ice-only diameter size
 * hail_ts: output hailstone temperature
 * hail_fw: output hailstone water fraction
@@ -42,11 +46,19 @@ Finally, **the implementation of this code for sigma vertical coordinates is not
 * hail_tc: output environmental temperature
 * hail_u: output environmental u wind
 * hail_v: output environmental v wind
-* hail_w: output environmental w wind
- 
+* hail_w: output environmental w wind 
+
 Hail diameter, density, x, y, z location, and itype (if in wet or dry growth),  are always output.
- 
-For additional documentation, see George Bryan’s README for his parcel code (README.parcel), or the main parts of the code itself in hail.F.
+
+#### Microphysical options to choose to turn on/off in hail code (0 off/1 on):
+**Note these options do not yet work!**
+
+For the full impact of oblate-shaped hailstones, set all these to non-zero values.
+* oblate_heat: include impact of oblate hailstone in heat transfer
+* oblate_massagg: include impact of oblate hailstone in mass aggregation
+* oblate_vt: include impact of oblate hailstone in terminal velocity ($V_t$) calculation. 
+    - If set to (1), use the Rasmussen and Heymsfield 1987 X-Re relationship.
+
 
 ## Run Instructions
 

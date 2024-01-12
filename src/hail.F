@@ -734,7 +734,8 @@
             !if ((myid.eq.0)) THEN
             !print *, ' HAILCAST before TERMINL, np,wval: ',np,wval
             !endif
-            CALL TERMINL(rhoval, hdense3d, hd3d, haildata(np,hailvt), tempval)
+            CALL TERMINL(rhoval, hdense3d, hd3d, haildata(np,hailvt), tempval,&
+                         oblate_vt)
             if( terrain_flag )then
                 !Convert m/s to sigma units....not sure about this
                 sigdot = sigdot - haildata(np,hailvt) / ((zt-zsp)*rzt)
@@ -1599,8 +1600,16 @@
 !!!!     inside HEATBUD.
 !!!! 20 Apr 2022...................................Becky Adams-Selin AER
 !!!!     Bug fix with sign of AFACTOR from HP85.
+!!!! 3 Jan 2024...................................Becky Adams-Selin AER
+!!!!     Add ability to model oblate hailstones!
 !!!!    
-!!!! See Adams-Selin and Ziegler 2016, MWR for further documentation.
+!!!!
+!!!! There are several options set in namelist &param17 that determine
+!!!! what physics is used herein. Consult the readme.md file for an 
+!!!! explanation.
+!!!!
+!!!! See Adams-Selin and Ziegler 2016, MWR; Adams-Selin 2023 MWR; and 
+!!!!  Pounds et al. 2024a, b JAS for further documentation.
 !!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1743,7 +1752,8 @@
     
     !!!!!!!!!!!!!!!!!!!!   STONE'S MASS GROWTH !!!!!!!!!!!!!!!!!!!!
     CALL MASSAGR(D,GM,GM1,GMW,GMI,DGM,DGMW,DGMI,DGMV,DI,ANU,RE,AE,&
-             TC,TS,P,DENSE,DENSA,FW,VT,XW,XI,secdel,ITYPE,DELRW,np) 
+             TC,TS,P,DENSE,DENSA,FW,VT,XW,XI,secdel,ITYPE,DELRW,np,&
+             oblate_massagg) 
              
     !if (np.eq.464922) write(*,'(a25,3f9.3)') 'After MASSAGR, D,GM,DENSE: ', D,GM,DENSE
     !if (np.eq.464922) write(*,'(a30,i2,2f9.3)') 'After MASSAGR, ITYPE,FW,TS: ', ITYPE,FW,TS
@@ -1753,7 +1763,8 @@
     !CALL HEATBUD(TS,TSm1,TSm2,FW,TC,VT,DELRW,D,DENSA,GM1,GM,DGM,DGMW,  & 
     !             DGMV,DGMI,GMW,GMI,DI,ANU,RE,AE,secdel,ITYPE,P)
     CALL HEATBUD(TS,FW,TC,VT,DELRW,D,DENSA,GM1,GM,DGM,DGMW,  & 
-                 DGMV,DGMI,GMW,GMI,DI,ANU,RE,AE,secdel,ITYPE,P,np)
+                 DGMV,DGMI,GMW,GMI,DI,ANU,RE,AE,secdel,ITYPE,P,np, &
+                 oblate_heat)
 
     !if (np.eq.464922) write(*,'(a25,3f9.3)') 'After HEATBUD, TS,FW,TC: ', TS,FW,TC
     !if (np.eq.464922) write(*,'(a30,i2,2f9.3)') 'After HEATBUD, ITYPE,FW,TS: ', ITYPE,FW,TS
@@ -1804,7 +1815,7 @@
 
 
   
-  SUBROUTINE TERMINL(DENSA,DENSE,D,VT,TC)
+  SUBROUTINE TERMINL(DENSA,DENSE,D,VT,TC,oblate_vt)
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !!!!
   !!!! INTERP: Calculate terminal velocity of the hailstone
@@ -1813,6 +1824,8 @@
   !!!!        DENSE  density of hailstone
   !!!!        D      diameter of hailstone (m)
   !!!!        TC     updraft temperature (K)
+  !!!!        oblate_vt   namelist option indicating what hailstone
+  !!!!                    vt, shape relationships to use
   !!!! OUTPUT:VT     hailstone terminal velocity (m/s)
   !!!!
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1823,6 +1836,8 @@
       REAL GMASS, GX, RE, WDUM, Y
       REAL, PARAMETER :: PI = 3.141592654, G = 9.78956
       REAL ANU
+
+      INTEGER oblate_vt
 
       !Mass of stone in kg
       GMASS = (DENSE * PI * (D**3.)) / 6.
@@ -2173,7 +2188,8 @@
 
 
   SUBROUTINE HEATBUD(TS,FW,TC,VT,DELRW,D,DENSA,GM1,GM,DGM,DGMW,     &
-                     DGMV,DGMI,GMW,GMI,DI,ANU,RE,AE,SEKDEL,ITYPE,P, np)
+                     DGMV,DGMI,GMW,GMI,DI,ANU,RE,AE,SEKDEL,ITYPE,P, np, &
+                     oblate_heat)
 !  SUBROUTINE HEATBUD(TS,TSm1,TSm2,FW,TC,VT,DELRW,D,DENSA,GM1,GM,DGM,DGMW,     &
 !                     DGMV,DGMI,GMW,GMI,DI,ANU,RE,AE,SEKDEL,ITYPE,P)
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2191,12 +2207,16 @@
   !!! DI - cm2 / sec
   !!! P  - hPa
   !!! Original HAILCAST HEATBUD subroutine uses c-g-s units, so do some conversions
+  !!! 
+  !!! oblate_heat: namelist option deteriming if should use a spherical (0)
+  !!!              or oblate (1) hailstone. Oblate hailstone assumed to 
+  !!!              fall with its maximum diameter horizontal.
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IMPLICIT NONE
       REAL*8 D
       REAL TS,TSm1,TSm2,FW,TC,VT,DELRW,DENSA,GM1,GM,DGM,DGMW,DGMV,  &
                     DGMI,GMW,GMI,DI,ANU,RE,AE,SEKDEL,P
-      INTEGER ITYPE
+      INTEGER ITYPE, oblate_heat
 
       integer np
       
@@ -2241,13 +2261,18 @@
       !!!   SELECT APPROPRIATE VALUES OF AH AND AE ACCORDING TO RE
       IF(RE.LT.6000.0)THEN
          AH=0.78+0.308*H
-         !AE=0.78+0.308*E
       ELSEIF(RE.GE.6000.0.AND.RE.LT.20000.0)THEN
-         AH=0.76*H
-         !AE=0.76*E
+         if ( oblate_heat .eq. 1 ) then
+            AH=0.8825*H
+         else            
+            AH=0.5 * 0.76*H  !RH87 Table 1 eq. 4 shifts from factor of 4 to factor of 2
+         end if
       ELSEIF(RE.GE.20000.0) THEN
-         AH=(0.57+9.0E-6*RE)*H
-         !AE=(0.57+9.0E-6*RE)*E  calculated in MASSAGR
+        if ( oblate_heat .eq. 1 ) then
+           AH = (0.6925 + 9.0E-6*RE)*H
+        else
+           AH = 0.5 * (0.57 + 9.0E-6*RE)*H !RH87 Table 1 eq. 5 shifts from factor of 4 to factor of 2
+        endif
       ENDIF
 
       !!!  FOR DRY GROWTH FW=0, CALCULATE NEW TS, ITIPE=1 
@@ -2264,8 +2289,17 @@
          !   (2.*PI*D*(AH*AK*(TCC-TSC)-AE*ALS*DI*DELRWC)+     &
          !   DGMW/SEKDEL*(ALF+CW*TCC)+DGMI/SEKDEL*CI*TCC)) + &
          !   0.2*TSCm1 + 0.2*TSCm2
-         !units fix RAS 20220318
-         TSC=TSC-TSC*DGMC/GM1C+SEKDEL/(GM1C*CI)*                &
+        !Note about signs, RAS 20240124 - !The second and third lines
+        !  in the coded equation below are equivalent to
+        ! -dq/dt in RH87 Table 1 Eqs. 3-5. dq/dt is positive
+        ! when heat is fluxing AWAY from the hailstone, which 
+        ! would result in a decrease in TSC. Using a -dq/dt
+        ! term ensures it is appropriately related to TSC.
+        !The TCC term below is T_env - T_hailstone. 
+        ! DELRWC, conversely, is rho_hailstone - rho_env. Because
+        ! these are different, a different sign is used before the 
+        ! term with DELRWC.
+        TSC=TSC-TSC*DGMC/GM1C+SEKDEL/(GM1C*CI)*                &
             (2.*PI*DCM*(AH*AK*(TCC-TSC)-AE*ALS*DI*DELRWC)+     &
             DGMWC/SEKDEL*(ALF+CW*TCC)+DGMIC/SEKDEL*CI*TCC)
          
@@ -2285,21 +2319,25 @@
             !FW=FW-FW*DGM/GM1+SEKDEL/(GM1*ALF)*               &
             !    (2.*PI*D*(AH*AK*TCC-AE*ALV*DI*DELRWC)+          &
             !    DGMW/SEKDEL*(ALF+CW*TCC)+DGMI/SEKDEL*CI*TCC)
-            !units fixed RAS 20220318
-            FW = FW-FW*DGMC/GMC+SEKDEL/(GMC*ALF)*               &
-                 (2.*PI*DCM*(AH*AK*TCC-AE*ALV*DI*DELRWC)+          &
+            !Note about signs, RAS 20240124 - !The second and third lines
+            !  in the coded equation below are equivalent to
+            ! -dq/dt in RH87 Table 1 Eqs. 3-5. dq/dt is positive
+            ! when heat is fluxing AWAY from the hailstone, which 
+            ! would result in a decrease in FW. Using a -dq/dt
+            ! term ensures it is appropriately related to FW.
+            !The TCC term below is T_env - T_hailstone. 
+            ! DELRWC, conversely, is rho_hailstone - rho_env. Because
+            ! these are different, a different sign is used before the 
+            ! term with DELRWC.
+            FW = FW-FW*DGMC/GMC + &
+                 SEKDEL/(GMC*ALF)*(2.*PI*DCM*(AH*AK*TCC-AE*ALV*DI*DELRWC)+ &
                  DGMWC/SEKDEL*(ALF+CW*TCC)+DGMIC/SEKDEL*CI*TCC)
          ELSE
             !Calculate decrease in ice mass due to melting
-            !DMLT = (2.*PI*D*AH*AK*TCC + 2.*PI*D*AE*ALV*DI*DELRWC + &
-            !        DGMW/SEKDEL*CW*TCC) / ALF
-            !FW = (FW*GM + DMLT) / GM
-            !units fix RAS 20220318
-            !sign fix RAS 20231219 - when TCC is positive it means a flux of 
-            ! heat away from the hailstone. When DELRWC is positive, it means
+            !Note about signs, RAS 20240124 - when TCC is positive it means an
+            ! increase in melting. When DELRWC is positive, it means
             ! a flux of vapor away from the hailstone, but that's a decrease
-            ! in temperature. Changed second term to a negative term.
-            !   
+            ! in temperature. 
             DMLT = SEKDEL * (2.*PI*DCM*AH*AK*TCC - 2.*PI*DCM*AE*ALV*DI*DELRWC + &
                     DGMWC/SEKDEL*CW*TCC) / ALF
             FW = (FW*GM1C + DMLT + DGMWC) / GMC

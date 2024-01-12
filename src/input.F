@@ -114,8 +114,9 @@
               prcl_th,prcl_t,prcl_prs,prcl_ptra,prcl_q,prcl_nc,               &
               prcl_km,prcl_kh,prcl_tke,prcl_dbz,prcl_b,prcl_vpg,prcl_vort,    &
               prcl_rho,prcl_qsat,prcl_sfc,                                    &
-              hail_dice, hail_ts, hail_fw, hail_vt, hail_itype,   &
+              hail_dice, hail_ts, hail_fw, hail_vt, hail_itype,               &
               hail_qice, hail_qliq, hail_tc, hail_u, hail_v, hail_w,          &
+              oblate_heat, oblate_massagg, oblate_vt,                         &
               n_out,s_out,u_out,v_out,w_out,z_out,sout2d,sout3d,              &
               stat_w,stat_wlevs,stat_u,stat_v,stat_rmw,                       &
               stat_pipert,stat_prspert,stat_thpert,stat_q,                    &
@@ -278,7 +279,8 @@
 !              hail_qice, hail_qliq, hail_tc, hail_u, hail_v, hail_w
       namelist /param17/                                                      &
               hail_dice, hail_ts, hail_fw, hail_itype, hail_vt,    &
-              hail_qice, hail_qliq, hail_tc, hail_u, hail_v, hail_w
+              hail_qice, hail_qliq, hail_tc, hail_u, hail_v, hail_w, &
+              oblate_heat, oblate_massagg, oblate_vt
 
     CONTAINS
 
