@@ -1671,6 +1671,12 @@
     INTEGER i, j, k, IFOUT, ind(1), inject, t
     CHARACTER*256 :: message
 
+    !constants needed for oblate hailstone calculations
+    REAL a_shedd !Factor multiplied by equivalent spherical diameter 
+                 ! (Deq) to get maximum diameter (Dmax) for 
+                 ! non-spherical hailstones. Retrieved from Shedd
+                 ! et al. 2021 Fig. 9. from 3D-scanned stones.
+
     !set some constants
     !secdel = 1.0
     secdel = dt
@@ -1679,6 +1685,23 @@
     pi = 3.14159265359
     ! CRTICAL MASS CAPABLE OF BEING "SUPPORTED" ON THE STONE'S SURFACE 
     CRIT = 2.0E-4
+    !shedd et al. constant (ignore y intercept in their Fig. 9)
+    !For an oblate spheroid, Dmax = a_shedd * Deq, where Deq
+    ! is the equivalent spherical radius
+    a_shedd = 1.3978 
+
+    !Now, calculate the difference between the surface area of a sphere
+    ! and an oblate spheroid with equivalent mass. 
+    ! SA_spheroid = sa_factor * SA_eq.sphere
+    if ( (oblate_heat .gt. 0) .or. (oblate_massagg .gt. 0) .or. &
+         (oblate_vt .gt. 0) ) then 
+        ellipticity = (1 - phi_min**2.)**0.5
+        sa_factor = (a_shedd**2. / 2.) * &
+                    ( 1 + (phi_min**2./(2*ellipticity)) * &
+                          LOG((1+ellipticity)/(1-ellipticity)) )
+    else
+        sa_factor = 1.0
+    endif
 
     !Transfer input data to "interpreted" variables.  These use to be arrays,
     ! hence the "A" at the end.
@@ -1709,8 +1732,7 @@
     VT = haildata1d(hailvt)  !terminal velocity calculated in hailcast_driver
     !Calculate our hailstone's mass given these variables
     GM = pi/6.*(D**3.)*DENSE
-
-
+    
 
     !!!!!!!!!!!!!!!!!!!!!!!!! START INTERACTING !!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1721,7 +1743,7 @@
         ! temperature check to avoid an iterative wet bulb calculation
         ! every time.
         IF (TC .GT. 273.15) THEN
-            CALL MELT(D,TC,P,RS,secdel,VT,TS,DENSE,GM,FW,np)
+            CALL MELT(D,TC,P,RS,secdel,VT,TS,DENSE,GM,FW,np,oblate_heat,sa_factor)
             !!!  TEST IF RETAINED WATER ON STONE IS GREATER THAN CRITICAL LIMIT, IF SO  
             !!!  BREAK UP 
             WATER=FW*GM  !KG
@@ -1753,7 +1775,7 @@
     !!!!!!!!!!!!!!!!!!!!   STONE'S MASS GROWTH !!!!!!!!!!!!!!!!!!!!
     CALL MASSAGR(D,GM,GM1,GMW,GMI,DGM,DGMW,DGMI,DGMV,DI,ANU,RE,AE,&
              TC,TS,P,DENSE,DENSA,FW,VT,XW,XI,secdel,ITYPE,DELRW,np,&
-             oblate_massagg) 
+             oblate_massagg, chi, a_shedd, sa_factor) 
              
     !if (np.eq.464922) write(*,'(a25,3f9.3)') 'After MASSAGR, D,GM,DENSE: ', D,GM,DENSE
     !if (np.eq.464922) write(*,'(a30,i2,2f9.3)') 'After MASSAGR, ITYPE,FW,TS: ', ITYPE,FW,TS
@@ -1764,7 +1786,7 @@
     !             DGMV,DGMI,GMW,GMI,DI,ANU,RE,AE,secdel,ITYPE,P)
     CALL HEATBUD(TS,FW,TC,VT,DELRW,D,DENSA,GM1,GM,DGM,DGMW,  & 
                  DGMV,DGMI,GMW,GMI,DI,ANU,RE,AE,secdel,ITYPE,P,np, &
-                 oblate_heat)
+                 oblate_heat, chi, sa_factor)
 
     !if (np.eq.464922) write(*,'(a25,3f9.3)') 'After HEATBUD, TS,FW,TC: ', TS,FW,TC
     !if (np.eq.464922) write(*,'(a30,i2,2f9.3)') 'After HEATBUD, ITYPE,FW,TS: ', ITYPE,FW,TS
@@ -1926,7 +1948,8 @@
       
 
   SUBROUTINE MASSAGR(D,GM,GM1,GMW,GMI,DGM,DGMW,DGMI,DGMV,DI,ANU,RE,AE,& 
-                 TC,TS,P,DENSE,DENSA,FW,VT,XW,XI,SEKDEL,ITYPE,DELRW,np) 
+                 TC,TS,P,DENSE,DENSA,FW,VT,XW,XI,SEKDEL,ITYPE,DELRW,np,&
+                 oblate_massagg, chi, a_shedd, sa_factor) 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !!! CALC THE STONE'S INCREASE IN MASS 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1934,7 +1957,8 @@
       IMPLICIT NONE
       REAL*8 D
       REAL GM,GM1,GMW,GMI,DGM,DGMW,DGMI,DI,DI_SI,ANU,RE,AE,  &
-                 TC,TS,P,DENSE,DENSA,FW,VT,XW,XI,SEKDEL,DELRW
+                 TC,TS,P,DENSE,DENSA,FW,VT,XW,XI,SEKDEL,DELRW, &
+                 chi, a_shedd, sa_factor
       INTEGER ITYPE 
 
       integer np
@@ -1945,7 +1969,8 @@
       REAL DC !MEAN CLOUD DROPLET DIAMETER (MICRONS, 1E-6M)
       REAL VOLL, VOLT !VOLUME OF NEW LAYER, TOTAL (M3)
       REAL VOL1, DGMW_NOSOAK, SOAK, SOAKM
-      REAL DENSAC, E, AFACTOR, NS, TSCELSIUS, VIMP, W
+      REAL DENSAC, E, AFACTOR, NS, TSCELSIUS, VIMP, W, ANUC
+      REAL*8 DMAX !max diameter of oblate spheroid (m)
       PI=3.141592654
 
       !!!  CALCULATE THE DIFFUSIVITY DI 
@@ -1957,16 +1982,6 @@
       DI = 0.211(TC/273.15)**1.94 * (1013.25/(P*1E-2))  !cm2 s-1
       DI_SI = DI * (1E-2)**2.  !m2 s-1, b/c multiplied by (1m/100cm)^2
 
-
-      !!!  COLLECTION EFFICIENCY FOR WATER AND ICE 
-      !EW=1.0      
-      !!!!   IF TS WARMER THAN -5C THEN ACCRETE ALL THE ICE (EI=1.0) 
-      !!!!   OTHERWISE EI=0.21      
-      !IF(TS.GE.268.15)THEN
-      !  EI=1.00
-      !ELSE
-      !  EI=0.21
-      !ENDIF
 
       !!!  COLLECTION EFFICIENCY FOR WATER AND ICE 
       EW=1.0      
@@ -1996,14 +2011,18 @@
       IF(RE.LT.6000.0)THEN
          AE=0.78+0.308*E
       ELSEIF(RE.GE.6000.0.AND.RE.LT.20000.0)THEN
-         !AE=0.76*E
-         AE=0.5*0.76*E. !bug fix to match RasmussenHeymsfield1987
+        if (oblate_massag .gt. 0) then
+            AE=0.5*chi*E. 
+        else 
+            AE=0.5*0.76*E. !RH87 Table 1 eq. 4 shifts from factor of 4 to factor of 2
+        endif
       ELSEIF(RE.GE.20000.0) THEN
-         !AE=(0.57+9.0E-6*RE)*E
-         AE = 0.5*(0.57+9.0E-6*RE)*E !bug fix to match RasmussenHeymsfield1987
+        if (oblate_massag .gt. 0) then 
+            AE = 0.5*( (chi - 0.19) +9.0E-6*RE)*E !!RH87 Table 1 eq. 4 shifts from factor of 4 to factor of 2
+        else
+            AE = 0.5*(0.57+9.0E-6*RE)*E !!RH87 Table 1 eq. 4 shifts from factor of 4 to factor of 2
+        endif
       ENDIF
-
-      !if (np.eq.464922) write(*,'(a16,2f9.3)') 'MASSAGR ANU,RE: ', ANU, RE
 
       !!!  CALC HAILSTONE'S MASS (GM), MASS OF WATER (GMW) AND THE  
       !!!  MASS OF ICE IN THE STONE (GMI)
@@ -2016,21 +2035,32 @@
       
       !!! NEW MASS GROWTH CALCULATIONS WITH VARIABLE RIME 
       !!! LAYER DENSITY BASED ON ZIEGLER ET AL. (1983)
+
+      !!! If oblate sperhoid, determine new maximum diameter.
+      if ( oblate_massagg .gt. 0 ) then
+          DMAX = a_shedd * D !m
+      else
+          DMAX = D
+      endif
       
       !!! CALCULATE INCREASE IN MASS DUE INTERCEPTED CLD WATER, USE
       !!! ORIGINAL DIAMETER
-      GMW2=GMW+SEKDEL*(PI/4.*D**2.*VT*XW*EW)
+      GMW2=GMW+SEKDEL*(PI/4.*DMAX**2.*VT*XW*EW) !DMAX = D if oblate_massagg off
       DGMW=GMW2-GMW 
       GMW=GMW2
 
       !!!  CALCULATE THE INCREASE IN MASS DUE INTERCEPTED CLOUD ICE
-      GMI2=GMI+SEKDEL*(PI/4.*D**2.*VT*XI*EI)
+      GMI2=GMI+SEKDEL*(PI/4.*DMAX**2.*VT*XI*EI) !DMAX = D if oblate_massagg off
       DGMI=GMI2-GMI 
       GMI=GMI2
   
       !!! CALCULATE INCREASE IN MASS DUE TO SUBLIMATION/CONDENSATION OF 
       !!! WATER VAPOR
-      DGMV = SEKDEL*2*PI*D*AE*DI_SI*DELRW
+      if ( oblate_massagg .gt. 0) then
+          DGMV = sa_factor*SEKDEL*PI*D*AE*DI_SI*DELRW
+      else
+          DGMV = SEKDEL*PI*D*AE*DI_SI*DELRW
+      endif
       IF (DGMV .LT. 0) DGMV=0
 
       !!!  CALCULATE THE TOTAL MASS CHANGE 
@@ -2041,12 +2071,23 @@
           !If hailstone encountered supercooled water, calculate new layer density 
           ! using Macklin form
           IF ((DGMW.GT.0).OR.(DGMV.GT.0)) THEN
-             !MEAN CLOUD DROPLET RADIUS, ASSUME CLOUD DROPLET CONC OF 3E8 M-3 (300 CM-3)
+             !MEAN CLOUD DROPLET RADIUS (M), ASSUME CLOUD DROPLET CONC OF 3E8 M-3 (300 CM-3)
              DC = (0.74*XW / (3.14159*1000.*3.E8))**0.33333333 * 1.E6 !MICRONS
              !!! FIND THE STOKES NUMBER  (rasmussen heymsfield 1985)
-             NS = 2*VT*100.*(DC*1.E-4)**2. / (9*ANU*D*50)  !need hail radius in cm
+             ! NS = 2 * VT * r_droplet * rho_droplet / (9 * dyn_viscosity * r_hail) 
+             ! VT (m/s) * 100 = vt (cm/s)
+             ! r_droplet = DC (micron) * 10**-4 = DC (cm)
+             ! rho_droplet = 1 g/cm3
+             ! D (m) * 50 = R (cm), where D (cm) = 2 * R (cm)
+             ! dyn_viscosity (g cm-1 s-1), OR 
+             !    ANU (kg m-1 s-1) * (1000 g/1kg) * (1m/100cm) --> 10 * ANU g cm-1 s-1
+             NS = 2*VT*100.*(DC*1.E-4)**2. / (90*ANU*D*50)  !need hail radius in cm
              !!! FIND IMPACT VELOCITY (rasmussen heymsfield 1985)
-             W = LOG10(NS)
+             IF (NS.LT.0.1)THEN
+                W=-1.
+             ELSE
+                W = LOG10(NS)
+             ENDIF
              IF (RE.GT.200) THEN
                 IF (NS.LE.0.1) THEN
                    VIMP = 0.0
@@ -2085,8 +2126,6 @@
                 ENDIF
              ENDIF
  
-       !if (np.eq.464922) write(*,'(a22,4f9.3)') 'MASSAGR NS,W,VIMP,TS: ', NS,W,VIMP,TS
-
               
              !RIME LAYER DENSITY, HEYMSFIELD AND PFLAUM 1985 FORM
              TSCELSIUS = TS - 273.16 ! The constant here, 273.16, is purposefully chosen
@@ -2109,10 +2148,6 @@
              ENDIF
 
              DENSELW = DENSELW * 1000. !KG M-3
-
-     !if (np.eq.464922) write(*,'(a25,3f9.3)') 'MASSAGR AFACTOR,DC,TSC: ', AFACTOR,DC,TSCELSIUS
-     !if (np.eq.464922) write(*,'(a25,3f9.3)') 'MASSAGR DENSELW, DGMW: ', DENSELW, DGMW
-
 
              !BOUND POSSIBLE DENSITIES
              IF (DENSELW.LT.100) DENSELW=100
@@ -2155,9 +2190,6 @@
       ENDIF
 
       !!!VOLUME OF NEW LAYER
-      !VOLL = (DGM) / DENSEL
-      !VOLL = (DGMI+DGMV+DGMW_NOSOAK) / DENSEL
-      !VOLL = (DGMI) / DENSELI + (DGMW_NOSOAK+DGMV) / DENSELW
       IF (DGM.GT.0) THEN
           IF (DGMI.LE.0) THEN
              VOLL = (DGMW_NOSOAK+DGMV) / DENSELW
@@ -2172,15 +2204,9 @@
 
       !!!NEW TOTAL VOLUME, DENSITY, DIAMETER
       VOLT = VOLL + GM/DENSE
-      !DENSE = (GM+DGM) / VOLT
       DENSE = (GM+DGMI+DGMV+DGMW_NOSOAK) / VOLT
-      !D=D+SEKDEL*0.5*VT/DENSE*(XW*EW+XI*EI)      
       GM = GM+DGMI+DGMW_NOSOAK+DGMV
       D = ( (6*GM) / (PI*DENSE) )**0.33333333 
-      !WRITE(*,*) 'DENSE', DENSE
-
-     !if (np.eq.464922) write(*,'(a25,3f9.3)') 'MASSAGR DENSE,GM,D: ', DENSE, GM, D
-     !if (np.eq.464922) write(*,'(a25,3f9.3)') 'MASSAGR VOLT,VOLL,DGM: ', VOLT,VOLL,DGM
 
 
   END SUBROUTINE MASSAGR
@@ -2189,9 +2215,7 @@
 
   SUBROUTINE HEATBUD(TS,FW,TC,VT,DELRW,D,DENSA,GM1,GM,DGM,DGMW,     &
                      DGMV,DGMI,GMW,GMI,DI,ANU,RE,AE,SEKDEL,ITYPE,P, np, &
-                     oblate_heat)
-!  SUBROUTINE HEATBUD(TS,TSm1,TSm2,FW,TC,VT,DELRW,D,DENSA,GM1,GM,DGM,DGMW,     &
-!                     DGMV,DGMI,GMW,GMI,DI,ANU,RE,AE,SEKDEL,ITYPE,P)
+                     oblate_heat, chi, sa_factor)
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !!! CALCULATE HAILSTONE'S HEAT BUDGET 
   !!! See Rasmussen and Heymsfield 1987; JAS
@@ -2211,11 +2235,15 @@
   !!! oblate_heat: namelist option deteriming if should use a spherical (0)
   !!!              or oblate (1) hailstone. Oblate hailstone assumed to 
   !!!              fall with its maximum diameter horizontal.
+  !!! chi: heat transfer rate, as in Macklin 1963.
+  !!! sa_factor: scaling factor between surface area of oblate spheroid and
+  !!!            surface area of equivalent sphere of same mass.
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IMPLICIT NONE
       REAL*8 D
       REAL TS,TSm1,TSm2,FW,TC,VT,DELRW,DENSA,GM1,GM,DGM,DGMW,DGMV,  &
-                    DGMI,GMW,GMI,DI,ANU,RE,AE,SEKDEL,P
+                    DGMI,GMW,GMI,DI,ANU,RE,AE,SEKDEL,P, chi, &
+                    sa_factor
       INTEGER ITYPE, oblate_heat
 
       integer np
@@ -2260,16 +2288,16 @@
 
       !!!   SELECT APPROPRIATE VALUES OF AH AND AE ACCORDING TO RE
       IF(RE.LT.6000.0)THEN
-         AH=0.78+0.308*H
+         AH=0.78+0.308*H !RH87 Table 1 eq. 3
       ELSEIF(RE.GE.6000.0.AND.RE.LT.20000.0)THEN
-         if ( oblate_heat .eq. 1 ) then
-            AH=0.8825*H
+         if ( oblate_heat .gt. 0 ) then
+            AH=0.5 * chi*H
          else            
             AH=0.5 * 0.76*H  !RH87 Table 1 eq. 4 shifts from factor of 4 to factor of 2
          end if
       ELSEIF(RE.GE.20000.0) THEN
-        if ( oblate_heat .eq. 1 ) then
-           AH = (0.6925 + 9.0E-6*RE)*H
+        if ( oblate_heat .gt. 0 ) then
+           AH = 0.5 * ( (chi - 0.19) + 9.0E-6*RE)*H
         else
            AH = 0.5 * (0.57 + 9.0E-6*RE)*H !RH87 Table 1 eq. 5 shifts from factor of 4 to factor of 2
         endif
@@ -2289,7 +2317,7 @@
          !   (2.*PI*D*(AH*AK*(TCC-TSC)-AE*ALS*DI*DELRWC)+     &
          !   DGMW/SEKDEL*(ALF+CW*TCC)+DGMI/SEKDEL*CI*TCC)) + &
          !   0.2*TSCm1 + 0.2*TSCm2
-        !Note about signs, RAS 20240124 - !The second and third lines
+        !Note about signs, RAS - !The second and third lines
         !  in the coded equation below are equivalent to
         ! -dq/dt in RH87 Table 1 Eqs. 3-5. dq/dt is positive
         ! when heat is fluxing AWAY from the hailstone, which 
@@ -2299,10 +2327,15 @@
         ! DELRWC, conversely, is rho_hailstone - rho_env. Because
         ! these are different, a different sign is used before the 
         ! term with DELRWC.
-        TSC=TSC-TSC*DGMC/GM1C+SEKDEL/(GM1C*CI)*                &
+         if ( oblate_heat .gt. 0) then
+            TSC=TSC-TSC*DGMC/GM1C+SEKDEL/(GM1C*CI)*                &
+                (sa_factor*2.*PI*DCM*(AH*AK*(TCC-TSC)-AE*ALS*DI*DELRWC)+     &
+                DGMWC/SEKDEL*(ALF+CW*TCC)+DGMIC/SEKDEL*CI*TCC)
+         else
+            TSC=TSC-TSC*DGMC/GM1C+SEKDEL/(GM1C*CI)*                &
             (2.*PI*DCM*(AH*AK*(TCC-TSC)-AE*ALS*DI*DELRWC)+     &
-            DGMWC/SEKDEL*(ALF+CW*TCC)+DGMIC/SEKDEL*CI*TCC)
-         
+            DGMWC/SEKDEL*(ALF+CW*TCC)+DGMIC/SEKDEL*CI*TCC)           
+         endif
          TS = TSC+273.155
          IF (TS.GE.273.155) THEN 
             TS=273.155
@@ -2319,7 +2352,7 @@
             !FW=FW-FW*DGM/GM1+SEKDEL/(GM1*ALF)*               &
             !    (2.*PI*D*(AH*AK*TCC-AE*ALV*DI*DELRWC)+          &
             !    DGMW/SEKDEL*(ALF+CW*TCC)+DGMI/SEKDEL*CI*TCC)
-            !Note about signs, RAS 20240124 - !The second and third lines
+            !Note about signs, RAS - !The second and third lines
             !  in the coded equation below are equivalent to
             ! -dq/dt in RH87 Table 1 Eqs. 3-5. dq/dt is positive
             ! when heat is fluxing AWAY from the hailstone, which 
@@ -2329,17 +2362,32 @@
             ! DELRWC, conversely, is rho_hailstone - rho_env. Because
             ! these are different, a different sign is used before the 
             ! term with DELRWC.
-            FW = FW-FW*DGMC/GMC + &
-                 SEKDEL/(GMC*ALF)*(2.*PI*DCM*(AH*AK*TCC-AE*ALV*DI*DELRWC)+ &
-                 DGMWC/SEKDEL*(ALF+CW*TCC)+DGMIC/SEKDEL*CI*TCC)
+            if (oblate_heat .gt. 0) then
+                FW = FW-FW*DGMC/GMC + &
+                    SEKDEL/(GMC*ALF)*&
+                    (sa_factor*2.*PI*DCM*(AH*AK*TCC-AE*ALV*DI*DELRWC)+ &
+                    DGMWC/SEKDEL*(ALF+CW*TCC)+DGMIC/SEKDEL*CI*TCC)
+            else
+                FW = FW-FW*DGMC/GMC + &
+                    SEKDEL/(GMC*ALF)*&
+                    (2.*PI*DCM*(AH*AK*TCC-AE*ALV*DI*DELRWC)+ &
+                    DGMWC/SEKDEL*(ALF+CW*TCC)+DGMIC/SEKDEL*CI*TCC)
+            endif                
          ELSE
             !Calculate decrease in ice mass due to melting
-            !Note about signs, RAS 20240124 - when TCC is positive it means an
+            !Note about signs, RAS - when TCC is positive it means an
             ! increase in melting. When DELRWC is positive, it means
             ! a flux of vapor away from the hailstone, but that's a decrease
-            ! in temperature. 
-            DMLT = SEKDEL * (2.*PI*DCM*AH*AK*TCC - 2.*PI*DCM*AE*ALV*DI*DELRWC + &
-                    DGMWC/SEKDEL*CW*TCC) / ALF
+            ! in temperature. Hence, second sign remains negative.
+            if (oblate_heat .gt. 0) then
+                DMLT = SEKDEL * (sa_factor*2.*PI*DCM*AH*AK*TCC - &
+                                 sa_factor*2.*PI*DCM*AE*ALV*DI*DELRWC + &
+                                 DGMWC/SEKDEL*CW*TCC) / ALF
+            else
+                DMLT = SEKDEL * (2.*PI*DCM*AH*AK*TCC - &
+                                 2.*PI*DCM*AE*ALV*DI*DELRWC + &
+                                 DGMWC/SEKDEL*CW*TCC) / ALF
+            endif                
             FW = (FW*GM1C + DMLT + DGMWC) / GMC
          ENDIF
          
@@ -2395,7 +2443,8 @@
   
   
   
-  SUBROUTINE MELT(D,TLAYER,PLAYER,RLAYER,SEC,VT,TS,DENSE,GM,FW,np)
+  SUBROUTINE MELT(D,TLAYER,PLAYER,RLAYER,SEC,VT,TS,DENSE,GM,FW,np,&
+                  oblate_heat, sa_factor)
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !!!  This is a spherical hail melting estimate based on the Goyer 
   !!!  et al. (1969) eqn (3).  The depth of the warm layer, estimated 
@@ -2407,6 +2456,14 @@
   !!!
   !!!  Increases water fraction, then determines in main subroutine
   !!!   what should be shed.
+  !!!
+  !!!  Oblate hailstone note, RAS 17 Jan 2024: Goyer found a chi
+  !!!  of 1 to better match with his observations of spherical hail, 
+  !!!  rather than the chi of 0.76 found for spheric hail by Macklin.
+  !!!  That was different enough I didn't want to muck with changing
+  !!!  around the Goyer assumptions about chi for non-spherical hail,
+  !!!  as I really don't have any idea what they could be.
+  !!!  So, the only change made was to add the change in surface area.
   !!! 
   !!!  INPUT:  TLAYER   mean sub-cloud layer temperature (K)
   !!!          PLAYER   mean sub-cloud layer pressure (Pa)
@@ -2417,6 +2474,9 @@
   !!!          D        diameter (m)
   !!!          GM       mass of the hailstone (kg)
   !!!          SEC      time interval over which hailstone is falling (s)
+  !!!        sa_factor: scaling factor between surface area of oblate spheroid and
+  !!!                   surface area of equivalent sphere of same mass.
+  !!!      oblate_heat: namelist option, set > 0 if want to use oblate hailstones
   !!!  OUTPUT: FW       water fraction (b/w 0 and 1)
   !!!          
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2429,8 +2489,9 @@
       REAL*8 a
       REAL sd, lt, ka, lf, lv, t0, dv, pi, rv, rhoice, &
            tres, re, delt, esenv, rhosenv, essfc, rhosfc, dsig, &
-           dmdt, mass, massorg, newmass, gamma, r, rho
-      INTEGER wcnt
+           dmdt, mass, massorg, newmass, gamma, r, rho, &
+           sa_factor
+      INTEGER wcnt, oblate_heat
 
       integer np
       
@@ -2509,7 +2570,11 @@
       dsig = rhosenv - rhosfc  !kg /m3
 
       !Calculate new mass growth
-      dmdt = (-1.7*pi*r*(re**0.5)/lf)*((ka*delt)+((lv-lf)*dv*dsig))
+      if (oblate_heat .gt. 0 ) then
+         dmdt = (-sa_factor*1.7*pi*r*(re**0.5)/lf)*((ka*delt)+((lv-lf)*dv*dsig))
+      else
+        dmdt = (- 1.7*pi*r*(re**0.5)/lf)*((ka*delt)+((lv-lf)*dv*dsig))
+      endif
       IF (dmdt.gt.0.) dmdt = 0
       mass = - dmdt*tres  !flip from <0; now represents frozen mass lost due to melt
 

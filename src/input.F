@@ -174,7 +174,7 @@
            wbe1,wbe2,wbe3,wte1,wte2,wte3,                                     &
            csound,hurr_rad,                                                   &
            cnst_znt,cnst_shflx,cnst_lhflx,cnst_ust,                           &
-           ddr,rlen,centerx,centery!,hail_start
+           ddr,rlen,centerx,centery, phi_min, chi!,hail_start
 
 !-----------------------------------------------------------------------
 
@@ -280,7 +280,7 @@
       namelist /param17/                                                      &
               hail_dice, hail_ts, hail_fw, hail_itype, hail_vt,    &
               hail_qice, hail_qliq, hail_tc, hail_u, hail_v, hail_w, &
-              oblate_heat, oblate_massagg, oblate_vt
+              oblate_heat, oblate_massagg, oblate_vt, phi_min
 
     CONTAINS
 

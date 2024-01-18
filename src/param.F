@@ -118,6 +118,7 @@
       double precision, dimension(0:bign) :: alpha
       ! delta(n,m,nu):
       double precision, dimension(0:bign,-1:bigm,0:bign) :: delta
+      real :: wgt !weight for chi (heat transfer) equations for hail
 
 !-----------------------------------------------------------------------
 !  for nssl microphysics:
@@ -524,6 +525,8 @@
       call MPI_BCAST(oblate_heat    ,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
       call MPI_BCAST(oblate_massagg ,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
       call MPI_BCAST(oblate_vt      ,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+      call MPI_BCAST(phi_min        ,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
+      call MPI_BCAST(chi            ,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
 
       IF ( ptype .ge. 26 ) THEN
       call MPI_BCAST(ccn       ,1,MPI_REAL,0,MPI_COMM_WORLD,ierr)
@@ -5365,6 +5368,32 @@
         !Double-check hail_start is a reasonable value.
         !if (hail_start.lt.0) hail_start = 0.
 
+        ! Determine chi, the Macklin 1963 heat transfer coefficient, based 
+        ! on phi_min. Determine phi_min based on namelist settings.
+        
+        if ( (oblate_heat .gt. 0) .or. (oblate_massagg .gt. 0) .or. &
+             (oblate_vt .gt. 0) ) then
+            
+            ! Check if phi_min already defined by user in the namelist.
+            ! If not, or if defined incorrectly, set it here.
+            ! Thresholds retrieved from Shedd et al. 2021 by C. Ziegler.
+            if ( (phi_min .lt. 0.4) .or. (phi_min .gt. 1.0) ) then
+                phi_min = 0.51 !reasonable default for oblate spheroids,
+                               !again from Shedd, documented in Pounds 
+                               !et al. 2024b JAS.
+            endif
+        else
+            phi_min = 1.0 ! sphere
+        endif
+
+        wgt = (phi_min - 0.4) / (1.0 - 0.4) !Pounds et al. 2024b weight
+        if (wgt .gt. 1.0) then
+            wgt = 1.0
+        elseif (wgt .lt. 0.0) then
+            wgt = 0.0
+        endif       
+        chi = ((1. - wgt) * 0.91) + (wgt * 0.76)
+
       else
 
         nhailtrajs = 1
@@ -5392,6 +5421,8 @@
       if(dowr) write(outfile,*) '  hailtc     = ',hailtc
       if(dowr) write(outfile,*) '  hailzs     = ',hailzs
       if(dowr) write(outfile,*) '  hailsig    = ',hailsig
+      if(dowr) write(outfile,*) '  phi_min    = ',phi_min
+      if(dowr) write(outfile,*) '  chi        = ',chi
       if(dowr) write(outfile,*)
 
 

@@ -53,7 +53,8 @@ Hail diameter, density, x, y, z location, and itype (if in wet or dry growth),  
 #### Microphysical options to choose to turn on/off in hail code (0 off/1 on):
 **Note these options do not yet work!**
 
-For the full impact of oblate-shaped hailstones, set all these to non-zero values.
+For the full impact of oblate-shaped hailstones, set all these to non-zero values. If *any* of these is set to 1, phi_min must also be set.
+* phi_min: ratio of minimum oblate spheroid diameter over maximum diameter (as in Shedd et al. 2021). If any of the oblate_* namelist options below are set to 1, it defaults to 0.51 as in Pounds et al. 2024b.
 * oblate_heat: include impact of oblate hailstone in heat transfer
 * oblate_massagg: include impact of oblate hailstone in mass aggregation
 * oblate_vt: include impact of oblate hailstone in terminal velocity ($V_t$) calculation. 
