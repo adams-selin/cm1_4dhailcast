@@ -110,6 +110,14 @@
 
       logical, parameter :: debug = .true.
 
+      real, parameter :: a_shedd = 1.3978
+      !Shedd et al. 2021 constant (ignoring the y intercept in Fig. 9)
+      !For an oblate spheroid, Dmax = a_shedd * Deq, where Deq
+      ! is the equivalent spherical radius.
+      !Used in TERMINL, HEATBUD, and MASSAGR depending on namelist
+      ! options.
+
+
 !----------------------------------------------------------------------
 !  apply bottom/top boundary conditions:
 !  [Note:  for u,v the array index (i,j,0) means the surface, ie z=0]
@@ -735,7 +743,7 @@
             !print *, ' HAILCAST before TERMINL, np,wval: ',np,wval
             !endif
             CALL TERMINL(rhoval, hdense3d, hd3d, haildata(np,hailvt), tempval,&
-                         oblate_vt)
+                         oblate_vt, a_shedd)
             if( terrain_flag )then
                 !Convert m/s to sigma units....not sure about this
                 sigdot = sigdot - haildata(np,hailvt) / ((zt-zsp)*rzt)
@@ -1535,7 +1543,7 @@
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
   SUBROUTINE hailstone_trajectory ( TCA, PA, rho, RA, RIA, RWA, dt,  &
-                                haildata1d, np)
+                                haildata1d, np, a_shedd)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!
 !!!! Hailstone driver, adapted from hailstone subroutine in HAILCAST
@@ -1662,6 +1670,10 @@
     REAL DENSA                 ! in-cloud updraft density (kg/m3)
     REAL DELRW                 ! diff in sat vap. dens. between hail and air (kg/m3)
                                      !used as initial hail embryo size
+    REAL a_shedd               !Constant multiplied by equivalent spherical diameter 
+                               ! (Deq) to get maximum diameter (Dmax) for 
+                               ! non-spherical hailstones. Retrieved from Shedd
+                               ! et al. 2021 Fig. 9. from 3D-scanned stones.
     !internal function variables
     REAL GM,GM1,GMW,GMI,DGM,DGMW,DGMI,DGMV,DI,ANU,RE,AE
     REAL dum, DIFF, icefactor, adiabatic_factor
@@ -1671,12 +1683,6 @@
     INTEGER i, j, k, IFOUT, ind(1), inject, t
     CHARACTER*256 :: message
 
-    !constants needed for oblate hailstone calculations
-    REAL a_shedd !Factor multiplied by equivalent spherical diameter 
-                 ! (Deq) to get maximum diameter (Dmax) for 
-                 ! non-spherical hailstones. Retrieved from Shedd
-                 ! et al. 2021 Fig. 9. from 3D-scanned stones.
-
     !set some constants
     !secdel = 1.0
     secdel = dt
@@ -1685,10 +1691,6 @@
     pi = 3.14159265359
     ! CRTICAL MASS CAPABLE OF BEING "SUPPORTED" ON THE STONE'S SURFACE 
     CRIT = 2.0E-4
-    !shedd et al. constant (ignore y intercept in their Fig. 9)
-    !For an oblate spheroid, Dmax = a_shedd * Deq, where Deq
-    ! is the equivalent spherical radius
-    a_shedd = 1.3978 
 
     !Now, calculate the difference between the surface area of a sphere
     ! and an oblate spheroid with equivalent mass. 
@@ -1837,7 +1839,7 @@
 
 
   
-  SUBROUTINE TERMINL(DENSA,DENSE,D,VT,TC,oblate_vt)
+  SUBROUTINE TERMINL(DENSA,DENSE,D,VT,TC,oblate_vt,a_shedd)
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !!!!
   !!!! INTERP: Calculate terminal velocity of the hailstone
@@ -1848,6 +1850,9 @@
   !!!!        TC     updraft temperature (K)
   !!!!        oblate_vt   namelist option indicating what hailstone
   !!!!                    vt, shape relationships to use
+  !!!!        a_shedd     Factor multiplied by equivalent spherical diameter 
+  !!!!                    (Deq) to get maximum diameter (Dmax) for 
+  !!!!                    non-spherical hailstones.
   !!!! OUTPUT:VT     hailstone terminal velocity (m/s)
   !!!!
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1857,39 +1862,64 @@
       REAL DENSA, DENSE, TC, VT
       REAL GMASS, GX, RE, WDUM, Y
       REAL, PARAMETER :: PI = 3.141592654, G = 9.78956
-      REAL ANU
+      REAL ANU, a_shedd
+      REAL*8 DMAX  !DMAX = a_shedd * D (where D = Deq)
+      REAL*8 DCMAX !DMAX in cm
 
       INTEGER oblate_vt
 
-      !Mass of stone in kg
-      GMASS = (DENSE * PI * (D**3.)) / 6.
-      
-      !Dynamic viscosity
-      ANU = (0.00001718)*(273.155+120.)/(TC+120.)*(TC/273.155)**(1.5)
-      
-      !CALC THE BEST NUMBER, X AND REYNOLDS NUMBER, RE 
-      GX=(8.0*GMASS*G*DENSA)/(PI*(ANU*ANU))
-      RE=(GX/0.6)**0.5
+      if (oblate_vt .gt. 0) then
+        !Use Heymsfield et al. 2020 Corregendum Vt-Dmax relationship.
+        !This relationship equates roughly to the RH87 spherical 
+        !relationship (see their Fig. 3), but assuming no critical
+        !transition in the Cd-Re relationship (due to roughness)
+        !and a lower Cd at higher Re. See Pounds et al. 2024b
+        !discussion for more info.
 
-      !SELECT APPROPRIATE EQUATIONS FOR TERMINAL VELOCITY DEPENDING ON 
-      !THE BEST NUMBER
-      IF (GX.LT.550) THEN
-        WDUM=LOG10(GX)
-        Y= -1.7095 + 1.33438*WDUM - 0.11591*(WDUM**2.0)      
-        RE=10**Y
-        VT=ANU*RE/(D*DENSA)
-      ELSE IF (GX.GE.550.AND.GX.LT.1800) THEN
-        WDUM=LOG10(GX)
-        Y= -1.81391 + 1.34671*WDUM - 0.12427*(WDUM**2.0) + 0.0063*(WDUM**3.0)
-        RE=10**Y
-        VT=ANU*RE/(D*DENSA)
-      ELSE IF (GX.GE.1800.AND.GX.LT.3.45E08) THEN
-        RE=0.4487*(GX**0.5536)
-        VT=ANU*RE/(D*DENSA)
-      ELSE 
+        DMAX = D*a_shedd
+        DCMAX = DMAX*1.E2  !m to cm
+
+        IF (DCMAX .ge. 1.5) THEN
+            VT = 8.4*DCMAX**0.67
+        ELSE  ! if .lt. 1.5
+            VT = 7.6*DCMAX**0.89
+        ENDIF
+
+    
+      else  !oblate_vt == 0
+        !Use RH87 Appendix B Best-Reynolds number relationship
+        ! for spherical hailstones. 
+
+        !Mass of stone in kg
+        GMASS = (DENSE * PI * (D**3.)) / 6.
+        
+        !Dynamic viscosity
+        ANU = (0.00001718)*(273.155+120.)/(TC+120.)*(TC/273.155)**(1.5)
+        
+        !CALC THE BEST NUMBER, X AND REYNOLDS NUMBER, RE 
+        GX=(8.0*GMASS*G*DENSA)/(PI*(ANU*ANU))
         RE=(GX/0.6)**0.5
-        VT=ANU*RE/(D*DENSA)
-      ENDIF
+
+        !SELECT APPROPRIATE EQUATIONS FOR TERMINAL VELOCITY DEPENDING ON 
+        !THE BEST NUMBER
+        IF (GX.LT.550) THEN
+            WDUM=LOG10(GX)
+            Y= -1.7095 + 1.33438*WDUM - 0.11591*(WDUM**2.0)      
+            RE=10**Y
+            VT=ANU*RE/(D*DENSA)
+        ELSE IF (GX.GE.550.AND.GX.LT.1800) THEN
+            WDUM=LOG10(GX)
+            Y= -1.81391 + 1.34671*WDUM - 0.12427*(WDUM**2.0) + 0.0063*(WDUM**3.0)
+            RE=10**Y
+            VT=ANU*RE/(D*DENSA)
+        ELSE IF (GX.GE.1800.AND.GX.LT.3.45E08) THEN
+            RE=0.4487*(GX**0.5536)
+            VT=ANU*RE/(D*DENSA)
+        ELSE 
+            RE=(GX/0.6)**0.5
+            VT=ANU*RE/(D*DENSA)
+        ENDIF
+      endif
 
   END SUBROUTINE TERMINL   
 
@@ -1959,7 +1989,7 @@
       REAL GM,GM1,GMW,GMI,DGM,DGMW,DGMI,DI,DI_SI,ANU,RE,AE,  &
                  TC,TS,P,DENSE,DENSA,FW,VT,XW,XI,SEKDEL,DELRW, &
                  chi, a_shedd, sa_factor
-      INTEGER ITYPE 
+      INTEGER ITYPE, oblate_massagg
 
       integer np
 
