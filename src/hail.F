@@ -2010,7 +2010,7 @@
       !Returning to RH87 Appendix A calculation for DI (their Dv).
       ! They want temperature in K, pressure in hPa, and produces
       ! results in cm2 s-1.
-      DI = 0.211(TC/273.15)**1.94 * (1013.25/(P*1E-2))  !cm2 s-1
+      DI = 0.211*(TC/273.15)**1.94 * (1013.25/(P*1E-2))  !cm2 s-1
       DI_SI = DI * (1E-2)**2.  !m2 s-1, b/c multiplied by (1m/100cm)^2
 
 
@@ -2024,6 +2024,11 @@
       ELSE  !cooler than -40C
          EI = 0.0
       ENDIF
+
+      !Something to consider - Pruppacher and Klett 1996 (2nd ed.) have an
+      ! equation to parameterize EW (14-34) based on laboratory experiments
+      ! from Cober and List (1993), that reduces efficiency by ~25% due to
+      ! surface roughness.
 
       !!!  CALCULATE THE VENTILATION COEFFICIENT - NEEDED FOR GROWTH FROM VAPOR
       !The coefficients in the ventilation coefficient equations have been 
@@ -2041,14 +2046,14 @@
       !!!   SELECT APPROPRIATE VALUES OF AE ACCORDING TO RE
       IF(RE.LT.6000.0)THEN
          AE=0.78+0.308*E
-      ELSEIF(RE.GE.6000.0.AND.RE.LT.20000.0)THEN
-        if (oblate_massag .gt. 0) then
-            AE=0.5*chi*E. 
+      ELSE IF (RE.GE.6000.0.AND.RE.LT.20000.0)THEN
+        if (oblate_massagg .gt. 0) then
+            AE=0.5*chi*E
         else 
-            AE=0.5*0.76*E. !RH87 Table 1 eq. 4 shifts from factor of 4 to factor of 2
+            AE=0.5*0.76*E !RH87 Table 1 eq. 4 shifts from factor of 4 to factor of 2
         endif
-      ELSEIF(RE.GE.20000.0) THEN
-        if (oblate_massag .gt. 0) then 
+      ELSE IF (RE.GE.20000.0) THEN
+        if (oblate_massagg .gt. 0) then 
             AE = 0.5*( (chi - 0.19) +9.0E-6*RE)*E !!RH87 Table 1 eq. 4 shifts from factor of 4 to factor of 2
         else
             AE = 0.5*(0.57+9.0E-6*RE)*E !!RH87 Table 1 eq. 4 shifts from factor of 4 to factor of 2
@@ -2320,13 +2325,13 @@
       !!!   SELECT APPROPRIATE VALUES OF AH AND AE ACCORDING TO RE
       IF(RE.LT.6000.0)THEN
          AH=0.78+0.308*H !RH87 Table 1 eq. 3
-      ELSEIF(RE.GE.6000.0.AND.RE.LT.20000.0)THEN
+      ELSE IF(RE.GE.6000.0.AND.RE.LT.20000.0)THEN
          if ( oblate_heat .gt. 0 ) then
             AH=0.5 * chi*H
          else            
             AH=0.5 * 0.76*H  !RH87 Table 1 eq. 4 shifts from factor of 4 to factor of 2
          end if
-      ELSEIF(RE.GE.20000.0) THEN
+      ELSE IF(RE.GE.20000.0) THEN
         if ( oblate_heat .gt. 0 ) then
            AH = 0.5 * ( (chi - 0.19) + 9.0E-6*RE)*H
         else
