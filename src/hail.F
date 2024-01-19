@@ -1677,6 +1677,7 @@
     !internal function variables
     REAL GM,GM1,GMW,GMI,DGM,DGMW,DGMI,DGMV,DI,ANU,RE,AE
     REAL dum, DIFF, icefactor, adiabatic_factor
+    REAL ellipticity, sa_factor
       
     REAL sec, secdel           ! time step, increment in seconds
     INTEGER tcounter           ! counter for timestep
