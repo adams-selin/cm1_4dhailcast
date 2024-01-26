@@ -2093,9 +2093,9 @@
       !!! CALCULATE INCREASE IN MASS DUE TO SUBLIMATION/CONDENSATION OF 
       !!! WATER VAPOR
       if ( oblate_massagg .gt. 0) then
-          DGMV = sa_factor*SEKDEL*PI*D*AE*DI_SI*DELRW
+          DGMV = -sa_factor*SEKDEL*PI*D*AE*DI_SI*DELRW
       else
-          DGMV = SEKDEL*PI*D*AE*DI_SI*DELRW
+          DGMV = -SEKDEL*PI*D*AE*DI_SI*DELRW
       endif
       IF (DGMV .LT. 0) DGMV=0
 
