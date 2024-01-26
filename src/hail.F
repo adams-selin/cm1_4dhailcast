@@ -734,8 +734,7 @@
             !if ((myid.eq.0)) THEN
             !print *, ' HAILCAST before TERMINL, np,wval: ',np,wval
             !endif
-            CALL TERMINL(rhoval, hdense3d, hd3d, haildata(np,hailvt), tempval,&
-                         oblate_vt)
+            CALL TERMINL(rhoval, hdense3d, hd3d, haildata(np,hailvt), tempval)
             if( terrain_flag )then
                 !Convert m/s to sigma units....not sure about this
                 sigdot = sigdot - haildata(np,hailvt) / ((zt-zsp)*rzt)
@@ -1600,8 +1599,6 @@
 !!!!     inside HEATBUD.
 !!!! 20 Apr 2022...................................Becky Adams-Selin AER
 !!!!     Bug fix with sign of AFACTOR from HP85.
-!!!! 3 Jan 2024...................................Becky Adams-Selin AER
-!!!!     Add ability to model oblate hailstones!
 !!!!    
 !!!!
 !!!! There are several options set in namelist &param17 that determine
@@ -1752,8 +1749,7 @@
     
     !!!!!!!!!!!!!!!!!!!!   STONE'S MASS GROWTH !!!!!!!!!!!!!!!!!!!!
     CALL MASSAGR(D,GM,GM1,GMW,GMI,DGM,DGMW,DGMI,DGMV,DI,ANU,RE,AE,&
-             TC,TS,P,DENSE,DENSA,FW,VT,XW,XI,secdel,ITYPE,DELRW,np,&
-             oblate_massagg) 
+             TC,TS,P,DENSE,DENSA,FW,VT,XW,XI,secdel,ITYPE,DELRW,np) 
              
     !if (np.eq.464922) write(*,'(a25,3f9.3)') 'After MASSAGR, D,GM,DENSE: ', D,GM,DENSE
     !if (np.eq.464922) write(*,'(a30,i2,2f9.3)') 'After MASSAGR, ITYPE,FW,TS: ', ITYPE,FW,TS
@@ -1763,8 +1759,7 @@
     !CALL HEATBUD(TS,TSm1,TSm2,FW,TC,VT,DELRW,D,DENSA,GM1,GM,DGM,DGMW,  & 
     !             DGMV,DGMI,GMW,GMI,DI,ANU,RE,AE,secdel,ITYPE,P)
     CALL HEATBUD(TS,FW,TC,VT,DELRW,D,DENSA,GM1,GM,DGM,DGMW,  & 
-                 DGMV,DGMI,GMW,GMI,DI,ANU,RE,AE,secdel,ITYPE,P,np, &
-                 oblate_heat)
+                 DGMV,DGMI,GMW,GMI,DI,ANU,RE,AE,secdel,ITYPE,P,np)
 
     !if (np.eq.464922) write(*,'(a25,3f9.3)') 'After HEATBUD, TS,FW,TC: ', TS,FW,TC
     !if (np.eq.464922) write(*,'(a30,i2,2f9.3)') 'After HEATBUD, ITYPE,FW,TS: ', ITYPE,FW,TS
@@ -1815,7 +1810,7 @@
 
 
   
-  SUBROUTINE TERMINL(DENSA,DENSE,D,VT,TC,oblate_vt)
+  SUBROUTINE TERMINL(DENSA,DENSE,D,VT,TC)
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !!!!
   !!!! INTERP: Calculate terminal velocity of the hailstone
@@ -1824,8 +1819,6 @@
   !!!!        DENSE  density of hailstone
   !!!!        D      diameter of hailstone (m)
   !!!!        TC     updraft temperature (K)
-  !!!!        oblate_vt   namelist option indicating what hailstone
-  !!!!                    vt, shape relationships to use
   !!!! OUTPUT:VT     hailstone terminal velocity (m/s)
   !!!!
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1836,8 +1829,6 @@
       REAL GMASS, GX, RE, WDUM, Y
       REAL, PARAMETER :: PI = 3.141592654, G = 9.78956
       REAL ANU
-
-      INTEGER oblate_vt
 
       !Mass of stone in kg
       GMASS = (DENSE * PI * (D**3.)) / 6.
@@ -1954,7 +1945,7 @@
       !Returning to RH87 Appendix A calculation for DI (their Dv).
       ! They want temperature in K, pressure in hPa, and produces
       ! results in cm2 s-1.
-      DI = 0.211(TC/273.15)**1.94 * (1013.25/(P*1E-2))  !cm2 s-1
+      DI = 0.211*(TC/273.15)**1.94 * (1013.25/(P*1E-2))  !cm2 s-1
       DI_SI = DI * (1E-2)**2.  !m2 s-1, b/c multiplied by (1m/100cm)^2
 
 
@@ -1997,7 +1988,7 @@
          AE=0.78+0.308*E
       ELSEIF(RE.GE.6000.0.AND.RE.LT.20000.0)THEN
          !AE=0.76*E
-         AE=0.5*0.76*E. !bug fix to match RasmussenHeymsfield1987
+         AE=0.5*0.76*E !bug fix to match RasmussenHeymsfield1987
       ELSEIF(RE.GE.20000.0) THEN
          !AE=(0.57+9.0E-6*RE)*E
          AE = 0.5*(0.57+9.0E-6*RE)*E !bug fix to match RasmussenHeymsfield1987
@@ -2188,8 +2179,7 @@
 
 
   SUBROUTINE HEATBUD(TS,FW,TC,VT,DELRW,D,DENSA,GM1,GM,DGM,DGMW,     &
-                     DGMV,DGMI,GMW,GMI,DI,ANU,RE,AE,SEKDEL,ITYPE,P, np, &
-                     oblate_heat)
+                     DGMV,DGMI,GMW,GMI,DI,ANU,RE,AE,SEKDEL,ITYPE,P, np)
 !  SUBROUTINE HEATBUD(TS,TSm1,TSm2,FW,TC,VT,DELRW,D,DENSA,GM1,GM,DGM,DGMW,     &
 !                     DGMV,DGMI,GMW,GMI,DI,ANU,RE,AE,SEKDEL,ITYPE,P)
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2208,15 +2198,12 @@
   !!! P  - hPa
   !!! Original HAILCAST HEATBUD subroutine uses c-g-s units, so do some conversions
   !!! 
-  !!! oblate_heat: namelist option deteriming if should use a spherical (0)
-  !!!              or oblate (1) hailstone. Oblate hailstone assumed to 
-  !!!              fall with its maximum diameter horizontal.
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       IMPLICIT NONE
       REAL*8 D
       REAL TS,TSm1,TSm2,FW,TC,VT,DELRW,DENSA,GM1,GM,DGM,DGMW,DGMV,  &
                     DGMI,GMW,GMI,DI,ANU,RE,AE,SEKDEL,P
-      INTEGER ITYPE, oblate_heat
+      INTEGER ITYPE
 
       integer np
       
@@ -2261,16 +2248,9 @@
       !!!   SELECT APPROPRIATE VALUES OF AH AND AE ACCORDING TO RE
       IF(RE.LT.6000.0)THEN
          AH=0.78+0.308*H
-      ELSEIF(RE.GE.6000.0.AND.RE.LT.20000.0)THEN
-         if ( oblate_heat .eq. 1 ) then
-            AH=0.8825*H
-         else            
+      ELSE IF (RE.GE.6000.0.AND.RE.LT.20000.0)THEN
             AH=0.5 * 0.76*H  !RH87 Table 1 eq. 4 shifts from factor of 4 to factor of 2
-         end if
-      ELSEIF(RE.GE.20000.0) THEN
-        if ( oblate_heat .eq. 1 ) then
-           AH = (0.6925 + 9.0E-6*RE)*H
-        else
+      ELSE IF (RE.GE.20000.0) THEN
            AH = 0.5 * (0.57 + 9.0E-6*RE)*H !RH87 Table 1 eq. 5 shifts from factor of 4 to factor of 2
         endif
       ENDIF
