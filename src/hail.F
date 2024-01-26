@@ -2037,7 +2037,11 @@
              !!! FIND THE STOKES NUMBER  (rasmussen heymsfield 1985)
              NS = 2*VT*100.*(DC*1.E-4)**2. / (9*ANU*D*50)  !need hail radius in cm
              !!! FIND IMPACT VELOCITY (rasmussen heymsfield 1985)
-             W = LOG10(NS)
+             IF (NS.LT.0.1)THEN
+                W=-1.
+             ELSE
+                W = LOG10(NS)
+             ENDIF
              IF (RE.GT.200) THEN
                 IF (NS.LE.0.1) THEN
                    VIMP = 0.0
