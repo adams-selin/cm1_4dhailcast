@@ -2256,7 +2256,6 @@
             AH=0.5 * 0.76*H  !RH87 Table 1 eq. 4 shifts from factor of 4 to factor of 2
       ELSE IF (RE.GE.20000.0) THEN
            AH = 0.5 * (0.57 + 9.0E-6*RE)*H !RH87 Table 1 eq. 5 shifts from factor of 4 to factor of 2
-        endif
       ENDIF
 
       !!!  FOR DRY GROWTH FW=0, CALCULATE NEW TS, ITIPE=1 
