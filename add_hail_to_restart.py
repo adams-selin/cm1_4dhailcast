@@ -3,7 +3,7 @@ import netCDF4 as nc4
 import pandas as pd
 
 #open the restart file with hail data in it
-nc = nc4.Dataset('/glade/scratch/radams/hail/20120529_quickrestart/cm1out_rst_000001.nc','r')
+nc = nc4.Dataset('/glade/derecho/scratch/radams/20120529/quick_restart/cm1out_rst_000001.nc','r')
 nhailloc = nc.dimensions['nhailloc'].size
 nhailtrajs = nc.dimensions['nhailtrajs'].size
 numhailtrajs = np.array(nc.variables['numhailtrajs'][0])  #int
@@ -13,13 +13,13 @@ nc.close()
 
 #hailtrajtim need to be evenly divisible by hailfrq, set in the namelist. We want that to 
 #be 1 second. So pull the time from the 'clean' restart file and round up.
-nohail_nc = nc4.Dataset('/glade/scratch/radams/hail/20120529/cm1out_rst_000001.nc','r')
+nohail_nc = nc4.Dataset('/glade/derecho/scratch/radams/20120529/clean_run/cm1out_rst_000004.nc','r')
 restart_time = np.ceil(np.array(nohail_nc.variables['time']))
 nc.close()
 
 
 #pull in haildata from the actual haildata file to see what it should look like at time 0
-nc = nc4.Dataset('/glade/scratch/radams/hail/20120529_quickrestart/cm1out_haildata.nc','r')
+nc = nc4.Dataset('/glade/derecho/scratch/radams/20120529/quick_restart/cm1out_haildata.nc','r')
 hailx_from_t0 = np.array(nc.variables['x'][0,:])
 haily_from_t0 = np.array(nc.variables['y'][0,:])
 hailz_from_t0 = np.array(nc.variables['z'][0,:])
@@ -51,7 +51,7 @@ hailloc[0,11,:] = hailitype_from_t0
 
 
 #append the t0 hail data to a restart file without hail data in it.
-nohail_nc = nc4.Dataset('/glade/scratch/radams/hail/20120529/cm1out_rst_000001.nc','a',format='NETCDF4_CLASSIC')
+nohail_nc = nc4.Dataset('/glade/derecho/scratch/radams/20120529/rst000025/cm1out_rst_000004.nc','a')
 nhailloc_dim = nohail_nc.createDimension('nhailloc',nhailloc)
 nhailtrajs_dim = nohail_nc.createDimension('nhailtrajs',nhailtrajs)
 

@@ -240,6 +240,13 @@
     nploop:  &
     DO np=1,nhailtrajs
 
+      !Make sure haildata(np,haild) isn't -999. If so
+      !there wasn't any moisture at embryo location at start, 
+      !and we can ignore it for here on out.
+      IF (haildata(np,haild) .eq. -999.) THEN
+        CONTINUE
+      ENDIF
+
       x3d = haildata(np,hailx)
       y3d = haildata(np,haily)
       if( .not. terrain_flag )then
@@ -310,16 +317,17 @@
       
       !Added an extra check here for hail trajectories requiring
       !z3d to be above 0.  If not, we can skip the rest of the 
-      !code.
+      !code. 
       myparcel:  IF( (iflag.ge.1.and.iflag.le.ni) .and.   &
                      (jflag.ge.1.and.jflag.le.nj) .and.   &
-                     (z3d.gt.0) )THEN
+                     (z3d.gt.0)  )THEN
 
       !Added an check here for mtime greater than hail_start, but 
       ! then decided against it
       !myparcel:  IF( (iflag.ge.1.and.iflag.le.ni) .and.   &
                      !(jflag.ge.1.and.jflag.le.nj) .and.   &
                      !(z3d.gt.0) )THEN
+
 
           rkloop:  DO nrkp = 1,2
 
@@ -953,6 +961,9 @@
           !   the falling hailstone can melt.
           !  However, we don't want to call this if the hailstone 
           !     is at any of the edges of the model domain, so check first.
+          !  Also, if haildata(np,haild) is -999, then embryo at start
+          !     wasn't in any moisture, so we can ignore it for the rest
+          !     of the simulation.
           !-----------------------------------------------------
           
           IF ( terrain_flag ) THEN
@@ -1689,6 +1700,13 @@
     !Set initial hailstone parameters based on haildata
     DENSE = haildata1d(haildense)  !kg/m3
     IF (haildata1d(hailts).lt.-99) THEN   !never changed from initiation
+        !Since this is the first pass through the routine, make sure
+        !the hailstone is near some moisture.
+        IF ( (RI+RW) .LT. 1.E-12) THEN
+            !Embryo not near any moisture - set to missing and skip the rest
+            haildata1d(haild) = -999.
+            GOTO 500  !end of subroutine....yes, I know this is lazy but it works
+        ENDIF
         TS = TC
         IF (TS.GE.273.155) THEN
             ITYPE = 2  !1 dry, 2 wet
@@ -1805,6 +1823,8 @@
       IF (hailqice.ge.1) haildata1d(hailqice) = RI
       IF (hailqliq.ge.1) haildata1d(hailqliq) = RW
       IF (hailtc.ge.1)   haildata1d(hailtc) = TC
+
+500 CONTINUE ! initial hail embryo wasn't in any moisture
             
   END SUBROUTINE hailstone_trajectory
 
