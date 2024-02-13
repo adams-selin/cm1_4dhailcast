@@ -2130,7 +2130,7 @@
 
 
              !BOUND POSSIBLE DENSITIES
-             IF (DENSELW.LT.100) DENSELW=100
+             IF (DENSELW.LT.500) DENSELW=500  !agree with Kumjian and Lombardo 2020
              IF (DENSELW.GT.900) DENSELW=900
              !WRITE(12,*) 'MASSAGR, PFLAUM, MACKLIN: ', DENSELW, &
              !             MACKLIN_DENSELW
