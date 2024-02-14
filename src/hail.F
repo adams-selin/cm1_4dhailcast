@@ -248,6 +248,13 @@
     nploop:  &
     DO np=1,nhailtrajs
 
+      !Make sure haildata(np,haild) isn't -999. If so
+      !there wasn't any moisture at embryo location at start, 
+      !and we can ignore it for here on out.
+      IF (haildata(np,haild) .eq. -999.) THEN
+          CONTINUE
+      ENDIF
+
       x3d = haildata(np,hailx)
       y3d = haildata(np,haily)
       if( .not. terrain_flag )then
@@ -1610,7 +1617,6 @@
 !!!!     Bug fix with sign of AFACTOR from HP85.
 !!!! 3 Jan 2024...................................Becky Adams-Selin AER
 !!!!     Add ability to model oblate hailstones!
-!!!!    
 !!!!
 !!!! There are several options set in namelist &param17 that determine
 !!!! what physics is used herein. Consult the readme.md file for an 
@@ -1718,6 +1724,13 @@
     !Set initial hailstone parameters based on haildata
     DENSE = haildata1d(haildense)  !kg/m3
     IF (haildata1d(hailts).lt.-99) THEN   !never changed from initiation
+        !Since this is the first pass through the routine, make sure
+        !the hailstone is near some moisture.
+        IF ( (RI+RW) .LT. 1.E-12) THEN
+            !Embryo not near any moisture - set to missing and skip the rest
+            haildata1d(haild) = -999.
+            GOTO 500  !end of subroutine....yes, I know this is lazy but it works
+        ENDIF
         TS = TC
         IF (TS.GE.273.155) THEN
             ITYPE = 2  !1 dry, 2 wet
@@ -1835,7 +1848,9 @@
       IF (hailqice.ge.1) haildata1d(hailqice) = RI
       IF (hailqliq.ge.1) haildata1d(hailqliq) = RW
       IF (hailtc.ge.1)   haildata1d(hailtc) = TC
-            
+
+500 CONTINUE ! initial hail embryo wasn't in any moisture
+      
   END SUBROUTINE hailstone_trajectory
 
 
