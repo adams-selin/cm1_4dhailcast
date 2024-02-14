@@ -977,7 +977,8 @@
                    (sig3d.gt.0.0) .AND. (sig3d.lt.maxz) ) THEN
  
                    CALL hailstone_trajectory(tempval,prsval,rhoval,   &
-                       qvval,qiaval,qwaval,dt,haildata(np,:),np)                  
+                       qvval,qiaval,qwaval,dt,haildata(np,:),np,      &
+                       a_shedd)                  
               ENDIF
           ELSE
               IF ( (x3d.gt.minx) .AND. (x3d.lt.maxx) .AND. &
@@ -989,7 +990,8 @@
 !                         haildata(np,hailw),haildata(np,hailfw)
 
                    CALL hailstone_trajectory(tempval,prsval,rhoval,   &
-                       qvval,qiaval,qwaval,dt,haildata(np,:),np)                  
+                       qvval,qiaval,qwaval,dt,haildata(np,:),np,      &
+                       a_shedd)                  
 
 !                       if (np.eq.464922) write(*,'(a36,i7,5f12.4)'),'HAILCAST after traj, np,d,u,v,w,fw: ',&
 !                         np,haildata(np,haild),haildata(np,hailu),haildata(np,hailv),&

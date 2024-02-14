@@ -31,7 +31,7 @@ LINKOPTS  = -lnetcdf -lnetcdff
 #  multiple processors, distributed memory (MPI), Intel compiler 
 #      (eg, NCAR's yellowstone/cheyenne)
 FC   = mpif90
-OPTS = -O3 -xHost -ip -assume byterecl -fp-model precise -ftz -no-fma
+OPTS = -O3 -ip -assume byterecl -fp-model precise -ftz -no-fma
 CPP  = cpp -C -P -traditional -Wno-invalid-pp-token -ffreestanding
 DM   = -DMPI
 #-----------------------------------------------------------------------------
