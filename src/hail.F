@@ -73,7 +73,7 @@
 !-----------------------------------------------------------------------
 
       real, intent(in) :: dt
-      real, intent(in), dimension(ib:ie) :: xh,uh,ruh
+      real, intent(in), dimension(ib:ie) :: xh,uh,ruh 
       real, intent(in), dimension(ib:ie+1) :: xf
       real, intent(in), dimension(jb:je) :: yh,vh,rvh
       real, intent(in), dimension(jb:je+1) :: yf
@@ -240,13 +240,6 @@
     nploop:  &
     DO np=1,nhailtrajs
 
-      !Make sure haildata(np,haild) isn't -999. If so
-      !there wasn't any moisture at embryo location at start, 
-      !and we can ignore it for here on out.
-      IF (haildata(np,haild) .eq. -999.) THEN
-        CONTINUE
-      ENDIF
-
       x3d = haildata(np,hailx)
       y3d = haildata(np,haily)
       if( .not. terrain_flag )then
@@ -331,8 +324,8 @@
 
           rkloop:  DO nrkp = 1,2
 
-       !if (np.eq.1282828) write(*,'(a28,2i7,3f9.1)'), 'hail.F np,nrkp,x3d,y3d,z3d: ', np, nrkp, x3d, y3d, z3d
-!       print *, 'hail.F: d, dense: ', hd3d, hdense3d
+        !   if (np.eq.43211) write(outfile,*) ' '
+        !   if (np.eq.43211) write(outfile,'(a28,i7,3f9.1)'), 'start rkl nrkp,x3d,y3d,z3d: ', nrkp, x3d, y3d, z3d
 
             IF( nrkp.eq.1 )THEN
                 i=iflag
@@ -412,7 +405,7 @@
             ENDIF
             
             
-            !if (np.eq.3089694) WRITE(*,'(a35,i6,4i4)'), ' HAILCAST np,i,iflag,jflag,kflag: ',np,i,iflag,jflag,kflag
+            !if (np.eq.43211) WRITE(outfile,'(a35,i6,3i4)') ' after flagset: iflag,jflag,kflag: ',np,iflag,jflag,kflag
             !WRITE(*,'(a33,i6,3f9.1)'), ' HAILCAST np,x3d,y3d,z3d: ',np,x3d,y3d,z3d
             !WRITE(*,'(a33,i6,2f9.3)'), ' HAILCAST np,d,dense: ',np,hd3d,hdense3d
             
@@ -484,7 +477,10 @@
             !print *, ' hail.F, ni, nj, nk: ', ni, nj, nk
             !print *, ' hail.F, ua(i,j,k): ', ua(i,j,k), ua(i+i,j,k), ua(i,j+1,k)
             call tri_interp(ni+1,nj,nk,i,j,k,w1,w2,w3,w4,w5,w6,w7,w8,ua,uval)
-             !if (np.eq.1282828) print *, ' hail.F, tri_interp uval:', uval
+            ! if (np.eq.43211) write(outfile,'(a24,i7,3f9.1)'), ' upts nrkp,x3d,y3d,z3d: ', nrkp, x3d, y3d, z3d
+            ! if (np.eq.43211) write(outfile,*) '  uval: ', uval
+            ! if (np.eq.43211) write(outfile,*) ' '
+
 
             !----------------------------------------------------------------------
             !  Data on v points
@@ -548,7 +544,9 @@
             ENDIF
 
             call tri_interp(ni,nj+1,nk,i,j,k,w1,w2,w3,w4,w5,w6,w7,w8,va,vval)
-            !print *, ' hail.F, tri_interp vval:', vval
+            ! if (np.eq.43211) write(outfile,'(a24,i7,3f9.1)'), ' vpts nrkp,x3d,y3d,z3d: ', nrkp, x3d, y3d, z3d
+            ! if (np.eq.43211) write(outfile,*) '  vval: ', vval
+            ! if (np.eq.43211) write(outfile,*) ' '
 
             !----------------------------------------------------------------------
             !  Data on w points
@@ -619,6 +617,9 @@
                   call get2d(i,j,x3d,y3d,xh,xf,yh,yf, 0, 0, 0, 0,zs,zsp)
                   z3d = zsp + sig3d*((zt-zsp)*rzt)
             endif
+            if (np.eq.43211) write(outfile,'(a24,i7,3f9.1)'), ' wpts nrkp,x3d,y3d,z3d: ', nrkp, x3d, y3d, z3d
+            if (np.eq.43211) write(outfile,*) '  wval: ', wval
+            if (np.eq.43211) write(outfile,*) ' '
 
             !----------------------------------------------------------------------
             !  Data on scalar points
@@ -680,6 +681,7 @@
 
             call tri_interp(ni,nj,nk,i,j,k,w1,w2,w3,w4,w5,w6,w7,w8,temp,tempval)
             call tri_interp(ni,nj,nk,i,j,k,w1,w2,w3,w4,w5,w6,w7,w8,rho,rhoval)
+            if (np.eq.43211) write(outfile,'(a21,f9.1)'), ' after scalar interp:', rx, ry, rz
 
 
 
@@ -739,9 +741,9 @@
             !  vertical motion calculation
             !  Note TERMINL returns a positive value for downward
             !-----------------------------------------------------
-            !if ((myid.eq.0)) THEN
-            !print *, ' HAILCAST before TERMINL, np,wval: ',np,wval
-            !endif
+            if (np.eq.43211) THEN
+            print *, ' HAILCAST before TERMINL, np,wval: ',np,wval
+            endif
             CALL TERMINL(rhoval, hdense3d, hd3d, haildata(np,hailvt), tempval)
             if( terrain_flag )then
                 !Convert m/s to sigma units....not sure about this
@@ -749,9 +751,10 @@
             else
                 wval = wval - haildata(np,hailvt)
             endif
-            !if ((myid.eq.0)) THEN
-            !   print *, ' HAILCAST after TERMINL, np,wval,vt: ',np,wval,haildata(np,hailvt)
-            !endif
+            if (np.eq.43211) THEN
+              print *, ' HAILCAST after TERMINL, np,wval,vt: ',np,wval,haildata(np,hailvt)
+              print *, '' 
+            endif
 
 
             !-----------------------------------------------------
@@ -823,8 +826,8 @@
                 endif
             ENDIF
 
-          !if (np.eq.1282828) write(*,'(a28,i7,6f8.1)'), ' HAILCAST end rkloop: ', &
-          !  np, x3d, y3d, z3d, dt2, uval, uu1
+          if (np.eq.43211) write(*,'(a28,i7,6f8.1)'), ' HAILCAST end rkloop: ', &
+           nrkp, x3d, y3d, z3d, uval, vval, wval
 
           ENDDO  rkloop
 
@@ -951,9 +954,9 @@
           call tri_interp(ni,nj,nk,i,j,k,w1,w2,w3,w4,w5,w6,w7,w8,qia,qiaval)
           call tri_interp(ni,nj,nk,i,j,k,w1,w2,w3,w4,w5,w6,w7,w8,qwa,qwaval)
 
-!           if (np.eq.51187)  write(*,'(a46,i7,6f12.4)'),&
-!               'HAILCAST before hailtraj,np,t,rho,p,qv,qi,qw: ',&
-!               np,tempval,rhoval,prsval,qvval,qiaval,qwaval
+        !   if (np.eq.43211)  write(*,'(a46,i7,6f12.4)'),&
+        !       'HAILCAST before hailtraj,np,t,rho,p,qv,qi,qw: ',&
+        !       np,tempval,rhoval,prsval,qvval,qiaval,qwaval
 
           !-----------------------------------------------------
           !  Call hailstone driver and store the results.
@@ -961,9 +964,6 @@
           !   the falling hailstone can melt.
           !  However, we don't want to call this if the hailstone 
           !     is at any of the edges of the model domain, so check first.
-          !  Also, if haildata(np,haild) is -999, then embryo at start
-          !     wasn't in any moisture, so we can ignore it for the rest
-          !     of the simulation.
           !-----------------------------------------------------
           
           IF ( terrain_flag ) THEN
@@ -979,16 +979,16 @@
                    (y3d.gt.miny) .AND. (y3d.lt.maxy) .AND. &
                    (z3d.gt.0.0)  .AND. (z3d.lt.maxz) ) THEN
 
-!                       if (np.eq.464922) write(*,'(a33,i7,5f12.4)'),'HAILCAST inside if, np,d,u,v,w,fw:',&
-!                         np,haildata(np,haild),haildata(np,hailu),haildata(np,hailv),&
-!                         haildata(np,hailw),haildata(np,hailfw)
+                      if (np.eq.43211) write(*,'(a33,i7,5f12.4)'),'HAILCAST inside if, np,d,u,v,w,fw:',&
+                        np,haildata(np,haild),haildata(np,hailu),haildata(np,hailv),&
+                        haildata(np,hailw),haildata(np,hailfw)
 
                    CALL hailstone_trajectory(tempval,prsval,rhoval,   &
                        qvval,qiaval,qwaval,dt,haildata(np,:),np)                  
 
-!                       if (np.eq.464922) write(*,'(a36,i7,5f12.4)'),'HAILCAST after traj, np,d,u,v,w,fw: ',&
-!                         np,haildata(np,haild),haildata(np,hailu),haildata(np,hailv),&
-!                         haildata(np,hailw),haildata(np,hailfw)
+                      if (np.eq.43211) write(*,'(a36,i7,5f12.4)'),'HAILCAST after traj, np,d,u,v,w,fw: ',&
+                        np,haildata(np,haild),haildata(np,hailu),haildata(np,hailv),&
+                        haildata(np,hailw),haildata(np,hailfw)
 
                       !if (np.eq.464922) write(*,'(a36,i7,4f12.4)'),'HAILCAST after traj, np,d,ts,vt,de: ',&
 !                       np,haildata(np,haild),haildata(np,hailts),haildata(np,hailvt),&
@@ -1700,13 +1700,6 @@
     !Set initial hailstone parameters based on haildata
     DENSE = haildata1d(haildense)  !kg/m3
     IF (haildata1d(hailts).lt.-99) THEN   !never changed from initiation
-        !Since this is the first pass through the routine, make sure
-        !the hailstone is near some moisture.
-        IF ( (RI+RW) .LT. 1.E-12) THEN
-            !Embryo not near any moisture - set to missing and skip the rest
-            haildata1d(haild) = -999.
-            GOTO 500  !end of subroutine....yes, I know this is lazy but it works
-        ENDIF
         TS = TC
         IF (TS.GE.273.155) THEN
             ITYPE = 2  !1 dry, 2 wet
@@ -1823,8 +1816,6 @@
       IF (hailqice.ge.1) haildata1d(hailqice) = RI
       IF (hailqliq.ge.1) haildata1d(hailqliq) = RW
       IF (hailtc.ge.1)   haildata1d(hailtc) = TC
-
-500 CONTINUE ! initial hail embryo wasn't in any moisture
             
   END SUBROUTINE hailstone_trajectory
 
