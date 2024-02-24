@@ -1016,6 +1016,7 @@
             haildata(np,haild) = -1.0e30
             haildata(np,haildense) = -1.0e30
             haildata(np,haildice) = -1.0e30
+            haildata(np,hailfw) = -1.0e30
             haildata(np,hailts) = -1.0e30
             haildata(np,hailvt) = -1.0e30
             haildata(np,hailitype) = -1.0e30
@@ -1649,9 +1650,6 @@
     REAL VT                    ! terminal velocity (m/s)
     REAL V                     ! actual stone velocity (m/s)
     REAL TS                    ! hailstone temperature (K)
-    REAL X, Y, Z               ! hail location (m)
-    !RAS15.10 HAILSTONE temperature differencing
-    !REAL TSm1, TSm2            ! hailstone temperature at previous 3 timesteps
     REAL FW                    ! fraction of stone that is liquid
     REAL WATER                 ! mass of stone that is liquid
     REAL CRIT                  ! critical water fraction before shedding
@@ -1722,6 +1720,7 @@
         TS = TC
         IF (TS.GE.273.155) THEN
             ITYPE = 2  !1 dry, 2 wet
+            TS = 273.155
         ELSE
             ITYPE = 1  !1 dry, 2 wet
         ENDIF
@@ -1739,12 +1738,6 @@
     
 
     !!!!!!!!!!!!!!!!!!!!!!!!! START INTERACTING !!!!!!!!!!!!!!!!!!!!!!!
-    ! if (np.eq.313793) write(*,'(a30,2f12.9)') &
-    !     'Entering hailtraj D, RI+RW: ', D, RI+RW
-    ! if (np.eq.313793) write(*,'(a30,f5.1,1x,f12.9,1x,f9.6)') &
-    !     'Entering hailtraj TC, GM, FW: ', TC, GM, FW
-    
-
     !Has the hailstone has melted entirely? If so (and we 
     ! are also below the melting level), we can skip the rest.
     IF ((FW .EQ. 1.0) .AND. (TC .GT. 273.15)) THEN
@@ -2028,13 +2021,18 @@
 
       !!!  COLLECTION EFFICIENCY FOR WATER AND ICE 
       EW=1.0      
-      !!!  Linear function for ice accretion efficiency
-      IF (TC .GE. 273.155) THEN
-         EI=1.00
-      ELSE IF (TC.GE.233.155) THEN
-         EI= 1.0 - ( (273.155 - TS) / 40. )
-      ELSE  !cooler than -40C
-         EI = 0.0
+    !   !!!  Linear function for ice accretion efficiency
+    !   IF (TC .GE. 273.155) THEN
+    !      EI=1.00
+    !   ELSE IF (TC.GE.233.155) THEN
+    !      EI= 1.0 - ( (273.155 - TS) / 40. )
+    !   ELSE  !cooler than -40C
+    !      EI = 0.0
+    !   ENDIF
+      IF (ITYPE.EQ.2) THEN  !Wet growth, following KL20 and P24b
+        EI=1.0
+      ELSE
+        EI=0.0
       ENDIF
 
       !Something to consider - Pruppacher and Klett 1996 (2nd ed.) have an
@@ -2105,9 +2103,9 @@
       !!! CALCULATE INCREASE IN MASS DUE TO SUBLIMATION/CONDENSATION OF 
       !!! WATER VAPOR
       if ( oblate_massagg .gt. 0) then
-          DGMV = -sa_factor*SEKDEL*PI*D*AE*DI_SI*DELRW
+          DGMV = sa_factor*SEKDEL*PI*D*AE*DI_SI*DELRW
       else
-          DGMV = -SEKDEL*PI*D*AE*DI_SI*DELRW
+          DGMV = SEKDEL*2*PI*D*AE*DI_SI*DELRW
       endif
       IF (DGMV .LT. 0) DGMV=0
 
