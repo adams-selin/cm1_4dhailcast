@@ -51,14 +51,14 @@ For additional documentation, see George Bryan’s README for his parcel code (R
 Hail diameter, density, x, y, z location, and itype (if in wet or dry growth),  are always output.
 
 #### Microphysical options to choose to turn on/off in hail code (0 off/1 on):
-**Note these options do not yet work!**
+**Note these options only work in the zshape branch!**
 
 For the full impact of oblate-shaped hailstones, set all these to non-zero values. If *any* of these is set to 1, phi_min must also be set.
 * phi_min: ratio of minimum oblate spheroid diameter over maximum diameter (as in Shedd et al. 2021). If any of the oblate_* namelist options below are set to 1, it defaults to 0.51 as in Pounds et al. 2024b.
 * oblate_heat: include impact of oblate hailstone in heat transfer
 * oblate_massagg: include impact of oblate hailstone in mass aggregation
 * oblate_vt: include impact of oblate hailstone in terminal velocity ($V_t$) calculation. 
-    - If set to (1), use the Rasmussen and Heymsfield 1987 X-Re relationship.
+    - If set to (1), use the Vt-D relationships from Heymsfield et al. 2020 (corredigum)
 
 
 ## Run Instructions

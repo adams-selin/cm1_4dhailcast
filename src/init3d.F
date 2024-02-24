@@ -427,14 +427,14 @@
         if(dowr) write(outfile,*)
         if(dowr) write(outfile,*) '  Hail trajectories ! '
         !if(dowr) write(outfile,*) '  Hail trajectories will "activate" at ',hail_start,' seconds'
-        if(dowr) write(outfile,*) '  nhvals,nhailtrajs = ',nhvals,nhailtrajs
+        if(dowr) write(outfile,*) '  nhvals,nhailtrajs = ',nhvals,nhailtrajs 
         !if(dowr) write(outfile,*) '  Initial hailstone locations (x,y,z,d,dense):'
 
         n = 0
         !Right mover trajectories
         do k=1,32
-        do j=1,93
-        do i=1,145 
+        do j=1,109 !93 20120529 sounding 2
+        do i=1,145 !145 20120529 sounding 2
           n = n + 1
           if(n.gt.nhailtrajs)then
             if(dowr) write(outfile,*)
@@ -445,8 +445,8 @@
             if(dowr) write(outfile,*) ' i,j,k,n, nhailtrajs: ', i, j, k, n, nhailtrajs
             call stopcm1
           endif
-          haildata(n,hailx) = 33000 + 250*(i-1) 
-          haildata(n,haily) = 34000 + 250*(j-1) 
+          haildata(n,hailx) = 30000 + 250*(i-1) !33000 20120529 sounding 2
+          haildata(n,haily) = 17000 + 250*(j-1) !34000 20120529 sounding 2
           haildata(n,hailz) = 3750 + 250*(k-1)
           haildata(n,haild) = 7.E-3 !7 mm
           haildata(n,haildense) = 900 !kg/m3
@@ -462,34 +462,34 @@
         enddo
 
         !left mover trajectories
-        do k=1,32
-        do j=1,121
-        do i=1,145 
-          n = n + 1
-          if(n.gt.nhailtrajs)then
-            if(dowr) write(outfile,*)
-            if(dowr) write(outfile,*) ' You are trying to define too many hailstones in LM'
-            if(dowr) write(outfile,*)
-            if(dowr) write(outfile,*) ' Increase the value of nhailtrajs in namelist.input'
-            if(dowr) write(outfile,*)
-            if(dowr) write(outfile,*) ' i,j,k,n, nhailtrajs: ', i,j,k,n, nhailtrajs
-            call stopcm1
-          endif
-          haildata(n,hailx) = 35000 + 250*(i-1) 
-          haildata(n,haily) = 57000 + 250*(j-1) 
-          haildata(n,hailz) = 3750 + 250*(k-1)
-          haildata(n,haild) = 7.E-3 !7 mm
-          haildata(n,haildense) = 900 !kg/m3
-          haildata(n,hailvt) = 0.
-          haildata(n,hailts) = -999. !will set to cloud temperature inside hail.F
-          haildata(n,hailfw) = 0.
-          haildata(n,hailitype) = 1.
-          !if(dowr) write(outfile,*) n,haildata(n,hailx),haildata(n,haily),&
-          !  haildata(n,hailz)
-          !if(dowr) write(outfile,*) n,haildata(n,haild),haildata(n,haildense)
-        enddo
-        enddo
-        enddo
+        ! do k=1,32
+        ! do j=1,121
+        ! do i=1,145 
+        !   n = n + 1
+        !   if(n.gt.nhailtrajs)then
+        !     if(dowr) write(outfile,*)
+        !     if(dowr) write(outfile,*) ' You are trying to define too many hailstones in LM'
+        !     if(dowr) write(outfile,*)
+        !     if(dowr) write(outfile,*) ' Increase the value of nhailtrajs in namelist.input'
+        !     if(dowr) write(outfile,*)
+        !     if(dowr) write(outfile,*) ' i,j,k,n, nhailtrajs: ', i,j,k,n, nhailtrajs
+        !     call stopcm1
+        !   endif
+        !   haildata(n,hailx) = 35000 + 250*(i-1) 
+        !   haildata(n,haily) = 57000 + 250*(j-1) 
+        !   haildata(n,hailz) = 3750 + 250*(k-1)
+        !   haildata(n,haild) = 7.E-3 !7 mm
+        !   haildata(n,haildense) = 900 !kg/m3
+        !   haildata(n,hailvt) = 0.
+        !   haildata(n,hailts) = -999. !will set to cloud temperature inside hail.F
+        !   haildata(n,hailfw) = 0.
+        !   haildata(n,hailitype) = 1.
+        !   !if(dowr) write(outfile,*) n,haildata(n,hailx),haildata(n,haily),&
+        !   !  haildata(n,hailz)
+        !   !if(dowr) write(outfile,*) n,haildata(n,haild),haildata(n,haildense)
+        ! enddo
+        ! enddo
+        ! enddo
 
         if(dowr) write(outfile,*)
 

@@ -3,8 +3,7 @@
 !-----------------------------------------------------------------------------
 !
 !  HAILCAST hail trajectory model
-!  31 Oct 2019
-!  http://hailcast.aer.com
+!  https://github.com/adams-selin/cm1_4dhailcast
 !
 !  (c)2019 - Atmospheric and Environmental Research
 !
@@ -248,13 +247,6 @@
     nploop:  &
     DO np=1,nhailtrajs
 
-      !Make sure haildata(np,haild) isn't -999. If so
-      !there wasn't any moisture at embryo location at start, 
-      !and we can ignore it for here on out.
-      IF (haildata(np,haild) .eq. -999.) THEN
-          CONTINUE
-      ENDIF
-
       x3d = haildata(np,hailx)
       y3d = haildata(np,haily)
       if( .not. terrain_flag )then
@@ -338,8 +330,8 @@
 
           rkloop:  DO nrkp = 1,2
 
-       !if (np.eq.1282828) write(*,'(a28,2i7,3f9.1)'), 'hail.F np,nrkp,x3d,y3d,z3d: ', np, nrkp, x3d, y3d, z3d
-!       print *, 'hail.F: d, dense: ', hd3d, hdense3d
+          !if (np.eq.313793) write(outfile,*) ' '
+          !if (np.eq.313793) write(outfile,'(a28,i7,3f9.1)'), 'start rkl nrkp,x3d,y3d,z3d: ', nrkp, x3d, y3d, z3d
 
             IF( nrkp.eq.1 )THEN
                 i=iflag
@@ -419,10 +411,7 @@
             ENDIF
             
             
-            !if (np.eq.3089694) WRITE(*,'(a35,i6,4i4)'), ' HAILCAST np,i,iflag,jflag,kflag: ',np,i,iflag,jflag,kflag
-            !WRITE(*,'(a33,i6,3f9.1)'), ' HAILCAST np,x3d,y3d,z3d: ',np,x3d,y3d,z3d
-            !WRITE(*,'(a33,i6,2f9.3)'), ' HAILCAST np,d,dense: ',np,hd3d,hdense3d
-            
+            !if (np.eq.313793) WRITE(outfile,'(a35,i6,3i4)') ' after flagset: iflag,jflag,kflag: ',np,iflag,jflag,kflag
 
             !----------------------------------------------------------------------
             !  Data on u points
@@ -746,9 +735,9 @@
             !  vertical motion calculation
             !  Note TERMINL returns a positive value for downward
             !-----------------------------------------------------
-            !if ((myid.eq.0)) THEN
-            !print *, ' HAILCAST before TERMINL, np,wval: ',np,wval
-            !endif
+            ! if (np.eq.313793) THEN
+            !     print *, ' HAILCAST before TERMINL, np,wval: ',np,wval
+            ! endif
             CALL TERMINL(rhoval, hdense3d, hd3d, haildata(np,hailvt), tempval,&
                          oblate_vt, a_shedd)
             if( terrain_flag )then
@@ -757,9 +746,9 @@
             else
                 wval = wval - haildata(np,hailvt)
             endif
-            !if ((myid.eq.0)) THEN
-            !   print *, ' HAILCAST after TERMINL, np,wval,vt: ',np,wval,haildata(np,hailvt)
-            !endif
+            ! if (np.eq.313793) THEN
+            !     print *, ' HAILCAST after TERMINL, np,wval,vt: ',np,wval,haildata(np,hailvt)
+            ! endif
 
 
             !-----------------------------------------------------
@@ -831,8 +820,8 @@
                 endif
             ENDIF
 
-          !if (np.eq.1282828) write(*,'(a28,i7,6f8.1)'), ' HAILCAST end rkloop: ', &
-          !  np, x3d, y3d, z3d, dt2, uval, uu1
+          !if (np.eq.313793) write(*,'(a28,i7,6f8.1)'), ' HAILCAST end rkloop: ', &
+          ! nrkp, x3d, y3d, z3d, uval, vval, wval
 
           ENDDO  rkloop
 
@@ -985,19 +974,23 @@
                    (y3d.gt.miny) .AND. (y3d.lt.maxy) .AND. &
                    (z3d.gt.0.0)  .AND. (z3d.lt.maxz) ) THEN
 
-!                       if (np.eq.464922) write(*,'(a33,i7,5f12.4)'),'HAILCAST inside if, np,d,u,v,w,fw:',&
-!                         np,haildata(np,haild),haildata(np,hailu),haildata(np,hailv),&
-!                         haildata(np,hailw),haildata(np,hailfw)
+                    ! if (np.eq.313793) write(*,*),' '
+                    ! if (np.eq.313793) write(*,'(a33,3(1x,f12.4))'),&
+                    !     'HAILCAST before traj d,fw,dns:',&
+                    !     haildata(np,haild), &
+                    !     haildata(np,hailfw),haildata(np,haildense)
 
                    CALL hailstone_trajectory(tempval,prsval,rhoval,   &
                        qvval,qiaval,qwaval,dt,haildata(np,:),np,      &
                        a_shedd)                  
 
-!                       if (np.eq.464922) write(*,'(a36,i7,5f12.4)'),'HAILCAST after traj, np,d,u,v,w,fw: ',&
-!                         np,haildata(np,haild),haildata(np,hailu),haildata(np,hailv),&
-!                         haildata(np,hailw),haildata(np,hailfw)
+                    ! if (np.eq.313793) write(*,'(a33,3(1x,f12.4))'),&
+                    !     'HAILCAST after traj d,fw,dns:',&
+                    !     haildata(np,haild), &
+                    !     haildata(np,hailfw),haildata(np,haildense)
+                    ! if (np.eq.313793) write(*,*),' '
 
-                      !if (np.eq.464922) write(*,'(a36,i7,4f12.4)'),'HAILCAST after traj, np,d,ts,vt,de: ',&
+                      !if (np.eq.313793) write(*,'(a36,i7,4f12.4)'),'HAILCAST after traj, np,d,ts,vt,de: ',&
 !                       np,haildata(np,haild),haildata(np,hailts),haildata(np,hailvt),&
 !                        haildata(np,haildense)
 
@@ -1726,13 +1719,6 @@
     !Set initial hailstone parameters based on haildata
     DENSE = haildata1d(haildense)  !kg/m3
     IF (haildata1d(hailts).lt.-99) THEN   !never changed from initiation
-        !Since this is the first pass through the routine, make sure
-        !the hailstone is near some moisture.
-        IF ( (RI+RW) .LT. 1.E-12) THEN
-            !Embryo not near any moisture - set to missing and skip the rest
-            haildata1d(haild) = -999.
-            GOTO 500  !end of subroutine....yes, I know this is lazy but it works
-        ENDIF
         TS = TC
         IF (TS.GE.273.155) THEN
             ITYPE = 2  !1 dry, 2 wet
@@ -1753,6 +1739,17 @@
     
 
     !!!!!!!!!!!!!!!!!!!!!!!!! START INTERACTING !!!!!!!!!!!!!!!!!!!!!!!
+    ! if (np.eq.313793) write(*,'(a30,2f12.9)') &
+    !     'Entering hailtraj D, RI+RW: ', D, RI+RW
+    ! if (np.eq.313793) write(*,'(a30,f5.1,1x,f12.9,1x,f9.6)') &
+    !     'Entering hailtraj TC, GM, FW: ', TC, GM, FW
+    
+
+    !Has the hailstone has melted entirely? If so (and we 
+    ! are also below the melting level), we can skip the rest.
+    IF ((FW .EQ. 1.0) .AND. (TC .GT. 273.15)) THEN
+        GOTO 300
+    ENDIF
 
     !Are we inside the cloud?
     IF ( (RI+RW) .LT. 1.E-12) THEN
@@ -1766,7 +1763,7 @@
             !!!  BREAK UP 
             WATER=FW*GM  !KG
             IF (WATER.GT.CRIT)THEN
-               CALL BREAKUP(DENSE,D,GM,FW,CRIT)
+               CALL BREAKUP(DENSE,D,GM,FW,CRIT,np)
             ENDIF
             !calculate ice-only diameter size
             D_ICE = ( (6*GM*(1.-FW)) / (3.141592654*DENSE) )**0.33333333 
@@ -1787,7 +1784,7 @@
     ! SATURATION VAPOUR DENSITY DIFFERENCE BETWTEEN STONE AND CLOUD
     CALL VAPORCLOSE(DELRW,PC,TS,TC,ITYPE,np)
  
-    !if (np.eq.464922) write(*,'(a30,i2,2f9.3)') 'Before MASSAGR, ITYPE,FW,TS: ', ITYPE,FW,TS
+    !if (np.eq.313793) write(*,'(a30,3f9.3)') 'Before MASSAGR, FW,TS,DENSE: ', FW,TS,DENSE
 
     
     !!!!!!!!!!!!!!!!!!!!   STONE'S MASS GROWTH !!!!!!!!!!!!!!!!!!!!
@@ -1795,8 +1792,8 @@
              TC,TS,P,DENSE,DENSA,FW,VT,XW,XI,secdel,ITYPE,DELRW,np,&
              oblate_massagg, chi, a_shedd, sa_factor) 
              
-    !if (np.eq.464922) write(*,'(a25,3f9.3)') 'After MASSAGR, D,GM,DENSE: ', D,GM,DENSE
-    !if (np.eq.464922) write(*,'(a30,i2,2f9.3)') 'After MASSAGR, ITYPE,FW,TS: ', ITYPE,FW,TS
+    !if (np.eq.313793) write(*,'(a30,3f12.9)') 'After MASSAGR, D,GM,DENSE: ', D,GM,DENSE
+    !if (np.eq.313793) write(*,'(a30,2f12.9)') 'After MASSAGR, FW,TS: ', FW,TS
 
 
     !!!!!!!!!!!!!!!!!!!!   HEAT BUDGET OF HAILSTONE !!!!!!!!!!!!!!!
@@ -1806,8 +1803,8 @@
                  DGMV,DGMI,GMW,GMI,DI,ANU,RE,AE,secdel,ITYPE,P,np, &
                  oblate_heat, chi, sa_factor)
 
-    !if (np.eq.464922) write(*,'(a25,3f9.3)') 'After HEATBUD, TS,FW,TC: ', TS,FW,TC
-    !if (np.eq.464922) write(*,'(a30,i2,2f9.3)') 'After HEATBUD, ITYPE,FW,TS: ', ITYPE,FW,TS
+    ! if (np.eq.313793) write(*,'(a30,3f12.9)') 'After HEATBUD, D,GM,DENSE: ', D,GM,DENSE
+    ! if (np.eq.313793) write(*,'(a30,2f12.9)') 'After HEATBUD, FW,TS: ', FW,TS
 
  
     !!!!!!!! TEST DIAMETER OF STONE AND HEIGHT ABOVE GROUND !!!!!!!
@@ -1815,7 +1812,7 @@
     !!!  BREAK UP 
     WATER=FW*GM  !KG
     IF (WATER.GT.CRIT)THEN
-       CALL BREAKUP(DENSE,D,GM,FW,CRIT)
+       CALL BREAKUP(DENSE,D,GM,FW,CRIT,np)
     ENDIF
  
                 
@@ -1851,8 +1848,6 @@
       IF (hailqliq.ge.1) haildata1d(hailqliq) = RW
       IF (hailtc.ge.1)   haildata1d(hailtc) = TC
 
-500 CONTINUE ! initial hail embryo wasn't in any moisture
-      
   END SUBROUTINE hailstone_trajectory
 
 
@@ -2118,6 +2113,9 @@
 
       !!!  CALCULATE THE TOTAL MASS CHANGE 
       DGM=DGMW+DGMI+DGMV
+
+      !if (np.eq.313793) write(*,'(a30,i3,2(1x,f12.9))') 'Inside MASSAGR, ITYPE,DGM,GM: ', ITYPE, DGM, GM
+
     
       !!! CALCULATE DENSITY OF NEW LAYER, DEPENDS ON FW AND ITYPE
       IF (ITYPE.EQ.1) THEN !DRY GROWTH
@@ -2458,7 +2456,7 @@
 
 
   
-  SUBROUTINE BREAKUP(DENSE,D,GM,FW,CRIT)
+  SUBROUTINE BREAKUP(DENSE,D,GM,FW,CRIT,np)
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !!!  TEST IF AMOUNT OF WATER ON SURFACE EXCEEDS CRTICAL LIMIT- 
   !!!  IF SO INVOKE SHEDDING SCHEME 
@@ -2467,6 +2465,8 @@
       IMPLICIT NONE
       REAL*8 D
       REAL DENSE, GM, FW, CRIT
+      integer np
+
       !local variables
       REAL WATER, GMI, WAT, PI
       DATA PI/3.141592654/
@@ -2489,9 +2489,12 @@
       IF(FW.GT.1.0) FW=1.0
       IF(FW.LT.0.0) FW=0.0
 
+
       ! RECALCULATE DIAMETER AFTER SHEDDING 
       ! Assume density remains the same
       D=(6.*GM/(PI*DENSE))**(0.333333333)
+
+
   END SUBROUTINE BREAKUP
   
   
@@ -2640,6 +2643,10 @@
       !instead of finding a new hailstone diameter, increase the fraction
       ! of water being retained on the hailstone surface.
       FW = (FW*GM + mass) / GM
+
+      IF(FW.GT.1.0) FW=1.0
+      IF(FW.LT.0.0) FW=0.0
+
   END SUBROUTINE MELT
 
 
