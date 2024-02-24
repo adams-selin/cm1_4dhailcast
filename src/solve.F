@@ -4373,7 +4373,7 @@
       !IF((ihailtraj.eq.1).AND.(mtime.ge.hail_start))THEN
         
       IF((ihailtraj.eq.1)) THEN
-         if (myid.eq.0) print *, 'HAILCAST, time_hailtraj: ', time_hailtrajs
+         if (myid.eq.0) print *, 'HAILCAST, mtime: ', mtime
         
         
         !  get corner info, ghost zone data, etc:
@@ -4421,6 +4421,7 @@
                     pw1,pw2,pe1,pe2,ps1,ps2,pn1,pn2,        &
                     nw1,nw2,ne1,ne2,sw1,sw2,se1,se2,reqs_p, &
                     tkw1,tkw2,tke1,tke2,tks1,tks2,tkn1,tkn2)
+
         if(timestats.ge.1) time_hailtrajs=time_hailtrajs+mytime()
       ENDIF
 

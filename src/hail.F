@@ -4,7 +4,8 @@
 !
 !  HAILCAST hail trajectory model
 !  31 Oct 2019
-!  http://hailcast.aer.com
+!  Adams-Selin, R.D., 2023: A three-dimensional trajectory clustering technique.
+!    Mon. Wea. Rev., 151, 2361–2375, https://doi.org/10.1175/MWR-D-22-0345.1.
 !
 !  (c)2019 - Atmospheric and Environmental Research
 !
@@ -107,6 +108,11 @@
       real :: dt2,uu1,vv1,ww1
       real :: z0,rznt,var
       real :: sigdot,sig1,zsp,sig3d
+      !variables for passing in 
+      integer :: hitype_val
+      real :: hdense_val, hts_val, hfw_val, hvt_val
+      real*8 :: hd_val, hdice_val
+
 
       logical, parameter :: debug = .true.
 
@@ -261,8 +267,10 @@
       IF( x3d.ge.xf(1) .and. x3d.le.xf(ni+1) .and.  &
           y3d.ge.yf(1) .and. y3d.le.yf(nj+1) )THEN
 
-      !if (np.eq.1282828) print *, 'hail.F: x3d,xf(1),xf(ni+1): ', x3d,xf(1),xf(ni+1)
-
+            ! if (np.eq.37761) then
+            !     write(*,'(a33,1f12.6)'),'start np loop, fw: ', haildata(np,hailfw) 
+            ! endif
+            
         IF(nx.eq.1)THEN
           iflag = 1
         ELSE
@@ -617,9 +625,9 @@
                   call get2d(i,j,x3d,y3d,xh,xf,yh,yf, 0, 0, 0, 0,zs,zsp)
                   z3d = zsp + sig3d*((zt-zsp)*rzt)
             endif
-            if (np.eq.43211) write(outfile,'(a24,i7,3f9.1)'), ' wpts nrkp,x3d,y3d,z3d: ', nrkp, x3d, y3d, z3d
-            if (np.eq.43211) write(outfile,*) '  wval: ', wval
-            if (np.eq.43211) write(outfile,*) ' '
+            !if (np.eq.43211) write(outfile,'(a24,i7,3f9.1)'), ' wpts nrkp,x3d,y3d,z3d: ', nrkp, x3d, y3d, z3d
+            !if (np.eq.43211) write(outfile,*) '  wval: ', wval
+            !if (np.eq.43211) write(outfile,*) ' '
 
             !----------------------------------------------------------------------
             !  Data on scalar points
@@ -681,7 +689,7 @@
 
             call tri_interp(ni,nj,nk,i,j,k,w1,w2,w3,w4,w5,w6,w7,w8,temp,tempval)
             call tri_interp(ni,nj,nk,i,j,k,w1,w2,w3,w4,w5,w6,w7,w8,rho,rhoval)
-            if (np.eq.43211) write(outfile,'(a21,f9.1)'), ' after scalar interp:', rx, ry, rz
+            !if (np.eq.43211) write(outfile,'(a21,f9.1)'), ' after scalar interp:', rx, ry, rz
 
 
 
@@ -741,9 +749,9 @@
             !  vertical motion calculation
             !  Note TERMINL returns a positive value for downward
             !-----------------------------------------------------
-            if (np.eq.43211) THEN
-            print *, ' HAILCAST before TERMINL, np,wval: ',np,wval
-            endif
+            ! if (np.eq.43211) THEN
+            ! print *, ' HAILCAST before TERMINL, np,wval: ',np,wval
+            ! endif
             CALL TERMINL(rhoval, hdense3d, hd3d, haildata(np,hailvt), tempval)
             if( terrain_flag )then
                 !Convert m/s to sigma units....not sure about this
@@ -751,10 +759,10 @@
             else
                 wval = wval - haildata(np,hailvt)
             endif
-            if (np.eq.43211) THEN
-              print *, ' HAILCAST after TERMINL, np,wval,vt: ',np,wval,haildata(np,hailvt)
-              print *, '' 
-            endif
+            ! if (np.eq.43211) THEN
+            !   print *, ' HAILCAST after TERMINL, np,wval,vt: ',np,wval,haildata(np,hailvt)
+            !   print *, '' 
+            ! endif
 
 
             !-----------------------------------------------------
@@ -826,8 +834,8 @@
                 endif
             ENDIF
 
-          if (np.eq.43211) write(*,'(a28,i7,6f8.1)'), ' HAILCAST end rkloop: ', &
-           nrkp, x3d, y3d, z3d, uval, vval, wval
+          !if (np.eq.43211) write(*,'(a28,i7,6f8.1)'), ' HAILCAST end rkloop: ', &
+          ! nrkp, x3d, y3d, z3d, uval, vval, wval
 
           ENDDO  rkloop
 
@@ -965,38 +973,73 @@
           !  However, we don't want to call this if the hailstone 
           !     is at any of the edges of the model domain, so check first.
           !-----------------------------------------------------
+
+          !
           
           IF ( terrain_flag ) THEN
               IF ( (x3d.gt.minx) .AND. (x3d.lt.maxx) .AND. &
                    (y3d.gt.miny) .AND. (y3d.lt.maxy) .AND. &
                    (sig3d.gt.0.0) .AND. (sig3d.lt.maxz) ) THEN
  
-                   CALL hailstone_trajectory(tempval,prsval,rhoval,   &
-                       qvval,qiaval,qwaval,dt,haildata(np,:),np)                  
+                   !CALL hailstone_trajectory(tempval,prsval,rhoval,   &
+                   !    qvval,qiaval,qwaval,dt,haildata(np,:),np)                  
               ENDIF
           ELSE
               IF ( (x3d.gt.minx) .AND. (x3d.lt.maxx) .AND. &
                    (y3d.gt.miny) .AND. (y3d.lt.maxy) .AND. &
                    (z3d.gt.0.0)  .AND. (z3d.lt.maxz) ) THEN
 
-                      if (np.eq.43211) write(*,'(a33,i7,5f12.4)'),'HAILCAST inside if, np,d,u,v,w,fw:',&
-                        np,haildata(np,haild),haildata(np,hailu),haildata(np,hailv),&
-                        haildata(np,hailw),haildata(np,hailfw)
+                    !Move the necessary variables from haildata array to input variables
+                    ! Note - this probably could be done by passing haildata(np,:) to 
+                    ! hailstone_trajectory, but I was having problems with the 
+                    ! water fraction resetting itself randomly.
+                    hdense_val = haildata(np,haildense)
+                    hts_val = haildata(np,hailts)
+                    hitype_val = INT(haildata(np,hailitype))
+                    hd_val = haildata(np,haild)
+                    hfw_val = haildata(np,hailfw)
+                    hvt_val = haildata(np,hailvt)
+                    hdice_val = 0. ! diagnosed inside hailstone_trajectory
+
+                    ! if (np.eq.37761) then
+                    !     write(*,'(a33,2(f12.6,1x))'),'HAILCAST before, fw: ',&
+                    !     haildata(np,hailfw), hfw_val
+                    ! endif
 
                    CALL hailstone_trajectory(tempval,prsval,rhoval,   &
-                       qvval,qiaval,qwaval,dt,haildata(np,:),np)                  
+                       qvval,qiaval,qwaval,dt,hdense_val,hts_val, &
+                       hitype_val,hd_val,hfw_val,hvt_val,hdice_val,np)                  
 
-                      if (np.eq.43211) write(*,'(a36,i7,5f12.4)'),'HAILCAST after traj, np,d,u,v,w,fw: ',&
-                        np,haildata(np,haild),haildata(np,hailu),haildata(np,hailv),&
-                        haildata(np,hailw),haildata(np,hailfw)
+                    ! if (np.eq.37761) then
+                    !     write(*,'(a33,2(f12.6,1x))'),'HAILCAST after, fw: ',&
+                    !     haildata(np,hailfw), hfw_val
+                    ! endif
 
-                      !if (np.eq.464922) write(*,'(a36,i7,4f12.4)'),'HAILCAST after traj, np,d,ts,vt,de: ',&
-!                       np,haildata(np,haild),haildata(np,hailts),haildata(np,hailvt),&
-!                        haildata(np,haildense)
-
-
-              ENDIF
+                    !Store the necessary variables back into haildata array
+                    haildata(np,haildense) = hdense_val
+                    haildata(np,hailts) = hts_val
+                    haildata(np,hailitype) = hitype_val
+                    haildata(np,haild) = hd_val
+                    haildata(np,hailfw) = hfw_val
+                    haildata(np,hailvt) = hvt_val
+                    if (haildice .gt. 0) then
+                        haildata(np,haildice) = hdice_val
+                    endif
+                    if (hailqice .gt. 0) then 
+                        haildata(np,hailqice) = qiaval
+                    endif
+                    if (hailqliq .gt. 0) then 
+                        haildata(np,hailqliq) = qwaval
+                    endif
+                    if (hailtc .gt. 0) then 
+                        haildata(np,hailtc) = tempval
+                    endif
+                ENDIF
           ENDIF
+
+        !   if (np.eq.37761) then
+        !     write(*,'(a33,2(f12.6,1x))'),'end np loop, fw: ', haildata(np,hailfw), hfw_val
+        !    endif
 
 #ifdef MPI
 
@@ -1016,6 +1059,7 @@
             haildata(np,haild) = -1.0e30
             haildata(np,haildense) = -1.0e30
             haildata(np,haildice) = -1.0e30
+            haildata(np,hailfw) = -1.0e30
             haildata(np,hailts) = -1.0e30
             haildata(np,hailvt) = -1.0e30
             haildata(np,hailitype) = -1.0e30
@@ -1058,7 +1102,7 @@
 
 !----------------------------------------------------------------------
 
-      !WRITE (*,*) 'HAILCAST, MAXVAL(w), w(314): ', MAXVAL(haildata(:,hailw)), haildata(314,hailw)
+    !WRITE (*,*) 'HAILCAST, MAXVAL(w), w(314): ', MAXVAL(haildata(:,hailw)), haildata(314,hailw)
 
       end subroutine hailcast_driver
 
@@ -1545,7 +1589,8 @@
 !ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
   SUBROUTINE hailstone_trajectory ( TCA, PA, rho, RA, RIA, RWA, dt,  &
-                                haildata1d, np)
+                                DENSE, TS, ITYPE, D, FW, VT, &
+                                D_ICE,  np)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!
 !!!! Hailstone driver, adapted from hailstone subroutine in HAILCAST
@@ -1558,8 +1603,15 @@
 !!!!     RIA          cloud ice and snow mixing ratio (kg/kg)
 !!!!
 !!!!  Input/Output:
-!!!!     haildata1d:  array of hailstone characteristics. 
-!!!!      including:  hail diameter in ***m***
+!!!!     DENSE        hailstone density (kg/m3)
+!!!!     TS           hailstone temperature (K)
+!!!!     D            hailstone eq. spherical diameter (**m**)
+!!!!     FW           hailstone water fraction (decimal)
+!!!!     VT           hailstone terminal velocity (m/s)         
+!!!!     ITYPE        wet (2) or dry (1) regime flag                                                       
+!!!!
+!!!!  Output (always output, but only modified if namelist option turned on):
+!!!!     D_ICE        hailstone ice-only eq. spherical diameter (**m**)
 !!!!
 !!!!  13 Aug 2013 .................................Becky Adams-Selin AER
 !!!!     adapted from hailstone subroutine in SPC's HAILCAST
@@ -1632,10 +1684,16 @@
                                               ,            RIA  & ! kg/kg
                                               ,            RWA    ! kg/kg
     real, intent(in) :: dt  !time step 
+ 
+    REAL, INTENT(INOUT) ::                               DENSE  & ! hailstone density (kg/m3)
+                                              ,             TS  & ! hailstone temperature (K)
+                                              ,             VT  & ! hailstone terminal velocity (m/s)
+                                              ,             FW    ! hailstone water fraction 
     
-    !OUTPUT:  hailstone information for *this* hailstone
-    REAL, DIMENSION (nhvals), INTENT(INOUT) :: haildata1d
-    !see param.F for which variables are defined to be where
+    REAL*8, INTENT(INOUT) ::                                 D  & ! hailstone diameter (m)
+                                              ,          D_ICE    ! ice-only hailstone diameter (m)
+
+    integer, intent(inout) ::                            ITYPE    ! wet (2) or dry (1) growth regime  
 
     integer, intent(in) :: np  !hailstone trajectory ID, for debugging
 
@@ -1644,18 +1702,8 @@
     REAL r_d                   ! constant
     REAL pi                    ! yup
     !hailstone parameters
-    REAL*8 D, D_ICE            ! hail diameter (m)
-    REAL VT                    ! terminal velocity (m/s)
-    REAL V                     ! actual stone velocity (m/s)
-    REAL TS                    ! hailstone temperature (K)
-    REAL X, Y, Z               ! hail location (m)
-    !RAS15.10 HAILSTONE temperature differencing
-    !REAL TSm1, TSm2            ! hailstone temperature at previous 3 timesteps
-    REAL FW                    ! fraction of stone that is liquid
     REAL WATER                 ! mass of stone that is liquid
     REAL CRIT                  ! critical water fraction before shedding
-    REAL DENSE                 ! hailstone density (kg/m3)
-    INTEGER ITYPE              ! wet (2) or dry (1) growth regime
     !in-cloud updraft parameters at location of hailstone
     REAL P                     ! in-cloud pressure (Pa)
     REAL RS                    ! in-cloud saturation mixing ratio 
@@ -1697,28 +1745,20 @@
     RI = RIA
     RW = RWA
 
-    !Set initial hailstone parameters based on haildata
-    DENSE = haildata1d(haildense)  !kg/m3
-    IF (haildata1d(hailts).lt.-99) THEN   !never changed from initiation
+    !Set hailstone parameters no already defined
+    IF (TS.lt.-99) THEN   !never changed from initiation
         TS = TC
         IF (TS.GE.273.155) THEN
             ITYPE = 2  !1 dry, 2 wet
+            TS = 273.155
         ELSE
             ITYPE = 1  !1 dry, 2 wet
         ENDIF
-    ELSE
-        TS = haildata1d(hailts) !K
-        ITYPE = haildata1d(hailitype)  !1 dry, 2 wet
     ENDIF
-    !TSm1 = TS  !temperature differencing to account for instabilities
-    !TSm2 = TS
-    D = haildata1d(haild)  !m
-    FW = haildata1d(hailfw)  !dimensionless
-    VT = haildata1d(hailvt)  !terminal velocity calculated in hailcast_driver
     !Calculate our hailstone's mass given these variables
     GM = pi/6.*(D**3.)*DENSE
 
-
+    !if (np.eq.37761) write(*,'(a30,1(f12.7,1x))') 'Start of HAILCAST, FW: ', FW
 
     !!!!!!!!!!!!!!!!!!!!!!!!! START INTERACTING !!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1755,15 +1795,17 @@
     ! SATURATION VAPOUR DENSITY DIFFERENCE BETWTEEN STONE AND CLOUD
     CALL VAPORCLOSE(DELRW,PC,TS,TC,ITYPE,np)
  
-    !if (np.eq.464922) write(*,'(a30,i2,2f9.3)') 'Before MASSAGR, ITYPE,FW,TS: ', ITYPE,FW,TS
+    !if (np.eq.37761) write(*,'(a30,3(f12.7,1x))') 'Before MASSAGR, FW,TS,TC: ', FW,TS,TC
+    !if (np.eq.37761) write(*,'(a30,3(f12.7,1x))') 'Before MASSAGR, D,GM,DENSE: ', D*1.E3,GM,DENSE
 
     
     !!!!!!!!!!!!!!!!!!!!   STONE'S MASS GROWTH !!!!!!!!!!!!!!!!!!!!
     CALL MASSAGR(D,GM,GM1,GMW,GMI,DGM,DGMW,DGMI,DGMV,DI,ANU,RE,AE,&
              TC,TS,P,DENSE,DENSA,FW,VT,XW,XI,secdel,ITYPE,DELRW,np) 
              
-    !if (np.eq.464922) write(*,'(a25,3f9.3)') 'After MASSAGR, D,GM,DENSE: ', D,GM,DENSE
-    !if (np.eq.464922) write(*,'(a30,i2,2f9.3)') 'After MASSAGR, ITYPE,FW,TS: ', ITYPE,FW,TS
+    ! if (np.eq.37761) write(*,'(a30,3(f12.7,1x))') 'After MASSAGR,  D,GM,DENSE: ', D*1.E3,GM,DENSE
+    ! if (np.eq.37761) write(*,'(a30,2(f12.7,1x),i2)') 'After MASSAGR, FW,TS,ITYPE: ', FW,TS,ITYPE
+    ! if (np.eq.37761) write(*,'(a30,3(f12.7,1x))') 'After MASSAGR,  DGMW, I, T: ', DGMW*1.E3,DGMI*1.E3,DGM*1.E3
 
 
     !!!!!!!!!!!!!!!!!!!!   HEAT BUDGET OF HAILSTONE !!!!!!!!!!!!!!!
@@ -1772,8 +1814,8 @@
     CALL HEATBUD(TS,FW,TC,VT,DELRW,D,DENSA,GM1,GM,DGM,DGMW,  & 
                  DGMV,DGMI,GMW,GMI,DI,ANU,RE,AE,secdel,ITYPE,P,np)
 
-    !if (np.eq.464922) write(*,'(a25,3f9.3)') 'After HEATBUD, TS,FW,TC: ', TS,FW,TC
-    !if (np.eq.464922) write(*,'(a30,i2,2f9.3)') 'After HEATBUD, ITYPE,FW,TS: ', ITYPE,FW,TS
+    ! if (np.eq.37761) write(*,'(a30,3(f12.7,1x))') 'After HEATBUD, D,GM,DENSE: ', D*1.E3,GM,DENSE
+    ! if (np.eq.37761) write(*,'(a30,2(f12.7,1x),i2)') 'After HEATBUD, FW,TS,ITYPE: ', FW,TS,ITYPE
 
  
     !!!!!!!! TEST DIAMETER OF STONE AND HEIGHT ABOVE GROUND !!!!!!!
@@ -1802,21 +1844,10 @@
 300   CONTINUE !stone has entirely melted and is below freezing level
 400   CONTINUE !hailstone not inside cloud
 
+ 
+      !if (np.eq.37761) write(*,'(a30,2(f12.7,1x))') 'End of HAILCAST, FW: ', FW
 
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      !store interesting data in output arrays
-      haildata1d(haild) = D
-      haildata1d(haildense) = DENSE
-      haildata1d(hailts) = TS
-      haildata1d(hailfw) = FW
-      haildata1d(hailvt) = VT
-      haildata1d(hailitype) = ITYPE
-      
-      IF (haildice.ge.1) haildata1d(haildice) = D_ICE
-      IF (hailqice.ge.1) haildata1d(hailqice) = RI
-      IF (hailqliq.ge.1) haildata1d(hailqliq) = RW
-      IF (hailtc.ge.1)   haildata1d(hailtc) = TC
-            
+
   END SUBROUTINE hailstone_trajectory
 
 
@@ -1870,7 +1901,6 @@
         RE=(GX/0.6)**0.5
         VT=ANU*RE/(D*DENSA)
       ENDIF
-
   END SUBROUTINE TERMINL   
 
    
@@ -1910,8 +1940,8 @@
         ESAT=611.*EXP(ALS/RV*(RATIO-1./TS))
       ENDIF
       RHOKOR=ESAT/(RV*TS) !kg /m3
-      
-      !!!  NOW FOR THE AMBIENT/IN-CLOUD CONDITIONS 
+
+      !!!  NOW FOR THE AMBIENT/IN-CLOUD CONDITIONS
       ESATW=611.*EXP(ALV/RV*(RATIO-1./TC))
       RHOOMGW=ESATW/(RV*TC)
       ESATI=611.*EXP(ALS/RV*(RATIO-1./TC))
@@ -1919,7 +1949,7 @@
       !RHOOMG=PC*(RHOOMGI-RHOOMGW)+RHOOMGW
       RHOOMG = RHOOMGI  !done as in hailtraj.f
 
-      !!!  CALC THE DIFFERENCE(KG/M3): <0 FOR CONDENSATION, 
+      !!!  CALC THE DIFFERENCE(KG/M3): <0 FOR CONDENSATION,
       !!!  >0 FOR EVAPORATION
       DELRW=(RHOKOR-RHOOMG) !hailstone - environment. Units kg/m3.
 
@@ -1973,12 +2003,17 @@
       !!!  COLLECTION EFFICIENCY FOR WATER AND ICE 
       EW=1.0      
       !!!  Linear function for ice accretion efficiency
-      IF (TC .GE. 273.155) THEN
-         EI=1.00
-      ELSE IF (TC.GE.233.155) THEN
-         EI= 1.0 - ( (273.155 - TS) / 40. )
-      ELSE  !cooler than -40C
-         EI = 0.0
+    !   IF (TC .GE. 273.155) THEN
+    !      EI=1.00
+    !   ELSE IF (TC.GE.233.155) THEN
+    !      EI= 1.0 - ( (273.155 - TS) / 40. )
+    !   ELSE  !cooler than -40C
+    !      EI = 0.0
+    !   ENDIF
+      IF (ITYPE.EQ.2) THEN  !Wet growth
+          EI=1.0
+      ELSE
+          EI=0.0
       ENDIF
 
       !!!  CALCULATE THE VENTILATION COEFFICIENT - NEEDED FOR GROWTH FROM VAPOR
@@ -1999,23 +2034,21 @@
          AE=0.78+0.308*E
       ELSEIF(RE.GE.6000.0.AND.RE.LT.20000.0)THEN
          !AE=0.76*E
-         AE=0.5*0.76*E !bug fix to match RasmussenHeymsfield1987
+         AE=0.5*0.76*E !RH87 Table 1 eq. 4 shifts from factor of 4 to factor of 2 
       ELSEIF(RE.GE.20000.0) THEN
          !AE=(0.57+9.0E-6*RE)*E
-         AE = 0.5*(0.57+9.0E-6*RE)*E !bug fix to match RasmussenHeymsfield1987
+         AE = 0.5*(0.57+9.0E-6*RE)*E !!RH87 Table 1 eq. 4 shifts from factor of 4 to factor of 2
       ENDIF
 
       !if (np.eq.464922) write(*,'(a16,2f9.3)') 'MASSAGR ANU,RE: ', ANU, RE
 
-      !!!  CALC HAILSTONE'S MASS (GM), MASS OF WATER (GMW) AND THE  
-      !!!  MASS OF ICE IN THE STONE (GMI)
       GM=PI/6.*(D**3.)*DENSE
       GMW=FW*GM
       GMI=GM-GMW
   
       !!!  STORE THE MASS
       GM1=GM
-      
+              
       !!! NEW MASS GROWTH CALCULATIONS WITH VARIABLE RIME 
       !!! LAYER DENSITY BASED ON ZIEGLER ET AL. (1983)
       
@@ -2033,6 +2066,8 @@
       !!! CALCULATE INCREASE IN MASS DUE TO SUBLIMATION/CONDENSATION OF 
       !!! WATER VAPOR
       DGMV = SEKDEL*2*PI*D*AE*DI_SI*DELRW
+      ! sign fix b/c DELRW is of the opposite direction
+      !DGMV = -SEKDEL*PI*D*AE*DI_SI*DELRW
       IF (DGMV .LT. 0) DGMV=0
 
       !!!  CALCULATE THE TOTAL MASS CHANGE 
@@ -2043,51 +2078,59 @@
           !If hailstone encountered supercooled water, calculate new layer density 
           ! using Macklin form
           IF ((DGMW.GT.0).OR.(DGMV.GT.0)) THEN
-             !MEAN CLOUD DROPLET RADIUS, ASSUME CLOUD DROPLET CONC OF 3E8 M-3 (300 CM-3)
+             !MEAN CLOUD DROPLET RADIUS (M), ASSUME CLOUD DROPLET CONC OF 3E8 M-3 (300 CM-3)
              DC = (0.74*XW / (3.14159*1000.*3.E8))**0.33333333 * 1.E6 !MICRONS
              !!! FIND THE STOKES NUMBER  (rasmussen heymsfield 1985)
-             NS = 2*VT*100.*(DC*1.E-4)**2. / (9*ANU*D*50)  !need hail radius in cm
+             ! NS = 2 * VT * r_droplet * rho_droplet / (9 * dyn_viscosity * r_hail) 
+             ! VT (m/s) * 100 = vt (cm/s)
+             ! r_droplet = DC (micron) * 10**-4 = DC (cm)
+             ! rho_droplet = 1 g/cm3
+             ! D (m) * 50 = R (cm), where D (cm) = 2 * R (cm)
+             ! dyn_viscosity (g cm-1 s-1), OR 
+             !    ANU (kg m-1 s-1) * (1000 g/1kg) * (1m/100cm) --> 10 * ANU g cm-1 s-1
+             NS = 2*VT*100.*(DC*1.E-4)**2. / (90*ANU*D*50)  !need hail radius in cm
+             
              !!! FIND IMPACT VELOCITY (rasmussen heymsfield 1985)
              IF (NS.LT.0.1)THEN
-                W=-1.
+                 W=-1.
              ELSE
-                W = LOG10(NS)
+                 W = LOG10(NS)
              ENDIF
              IF (RE.GT.200) THEN
                 IF (NS.LE.0.1) THEN
-                   VIMP = 0.0
+                    VIMP = 0.0
                 ELSEIF ((NS.GT.0.1).AND.(NS.LE.10)) THEN
-                   VIMP = (0.356 + 0.4738*W - 0.1233*W**2. &
-                           -0.1618*W**3. + 0.0807*W**4.)*VT
+                    VIMP = (0.356 + 0.4738*W - 0.1233*W**2. &
+                            -0.1618*W**3. + 0.0807*W**4.)*VT
                 ELSEIF (NS.GT.10) THEN
-                   VIMP = 0.63*VT
+                    VIMP = 0.63*VT
                 ENDIF
              ELSEIF ((RE.GT.65).AND.(RE.LE.200)) THEN
                 IF (NS.LE.0.1) THEN
-                   VIMP = 0.0
+                    VIMP = 0.0
                 ELSEIF ((NS.GT.0.1).AND.(NS.LE.10)) THEN
-                   VIMP = (0.3272 + 0.4907*W - 0.09452*W**2. &
-                           -0.1906*W**3. + 0.07105*W**4.)*VT
+                    VIMP = (0.3272 + 0.4907*W - 0.09452*W**2. &
+                            -0.1906*W**3. + 0.07105*W**4.)*VT
                 ELSEIF (NS.GT.10) THEN
-                   VIMP = 0.61*VT
+                    VIMP = 0.61*VT
                 ENDIF
              ELSEIF ((RE.GT.20).AND.(RE.LE.65)) THEN
                 IF (NS.LE.0.1) THEN
-                   VIMP = 0.0
+                    VIMP = 0.0
                 ELSEIF ((NS.GT.0.1).AND.(NS.LE.10)) THEN
-                   VIMP = (0.2927 + 0.5085*W - 0.03453*W**2. &
-                           -0.2184*W**3. + 0.03595*W**4.)*VT
+                    VIMP = (0.2927 + 0.5085*W - 0.03453*W**2. &
+                            -0.2184*W**3. + 0.03595*W**4.)*VT
                 ELSEIF (NS.GT.10) THEN
-                   VIMP = 0.59*VT
+                    VIMP = 0.59*VT
                 ENDIF
              ELSEIF (RE.LE.20) THEN
                 IF (NS.LE.0.4) THEN
-                   VIMP = 0.0
+                    VIMP = 0.0
                 ELSEIF ((NS.GT.0.4).AND.(NS.LE.10)) THEN
-                   VIMP = (0.1701 + 0.7246*W + 0.2257*W**2. &
-                           -1.13*W**3. + 0.5756*W**4.)*VT
+                    VIMP = (0.1701 + 0.7246*W + 0.2257*W**2. &
+                            -1.13*W**3. + 0.5756*W**4.)*VT
                 ELSEIF (NS.GT.10) THEN
-                   VIMP = 0.57*VT
+                    VIMP = 0.57*VT
                 ENDIF
              ENDIF
  
@@ -2096,39 +2139,35 @@
               
              !RIME LAYER DENSITY, HEYMSFIELD AND PFLAUM 1985 FORM
              TSCELSIUS = TS - 273.16 ! The constant here, 273.16, is purposefully chosen
-                                     ! to be slightly larger than 273.155. That way a TS of
-                                     ! exactly 273.155 doesn't result in an undefined
-                                     ! AFACTOR. When in transition, for a few timesteps 
-                                     ! hailstones can have a TS of 273.155 but no retained 
-                                     ! liquid water on their surface. Is such a hailstone 
-                                     ! in officially wet or dry growth? Not clear. This
-                                     ! kludge is the result.
+             ! to be slightly larger than 273.155. That way a TS of
+             ! exactly 273.155 doesn't result in an undefined
+             ! AFACTOR. When in transition, for a few timesteps 
+             ! hailstones can have a TS of 273.155 but no retained 
+             ! liquid water on their surface. Is such a hailstone 
+             ! in officially wet or dry growth? Not clear. This
+             ! kludge is the result.
              AFACTOR = -DC*VIMP/TSCELSIUS
              !IF ((TSCELSIUS.LE.-5.).OR.(AFACTOR.GE.-1.60)) THEN
              !error in AFACTOR sign in HF85
              IF ((TSCELSIUS.LE.-5.).AND.(AFACTOR.GE.1.60)) THEN  
-                 DENSELW = 0.30*(AFACTOR)**0.44
+             DENSELW = 0.30*(AFACTOR)**0.44
              !ELSEIF (TSCELSIUS.GT.-5.) THEN
              ELSE
-                 DENSELW = EXP(-0.03115 - 1.7030*AFACTOR + &
-                               0.9116*AFACTOR**2. - 0.1224*AFACTOR**3.)
+             DENSELW = EXP(-0.03115 - 1.7030*AFACTOR + &
+                     0.9116*AFACTOR**2. - 0.1224*AFACTOR**3.)
              ENDIF
-
+   
              DENSELW = DENSELW * 1000. !KG M-3
-
-     !if (np.eq.464922) write(*,'(a25,3f9.3)') 'MASSAGR AFACTOR,DC,TSC: ', AFACTOR,DC,TSCELSIUS
-     !if (np.eq.464922) write(*,'(a25,3f9.3)') 'MASSAGR DENSELW, DGMW: ', DENSELW, DGMW
-
-
+      
              !BOUND POSSIBLE DENSITIES
-             IF (DENSELW.LT.500) DENSELW=500  !agree with Kumjian and Lombardo 2020
+             IF (DENSELW.LT.500) DENSELW=500
              IF (DENSELW.GT.900) DENSELW=900
-             !WRITE(12,*) 'MASSAGR, PFLAUM, MACKLIN: ', DENSELW, &
-             !             MACKLIN_DENSELW
+ 
+             
           ENDIF
           IF (DGMI.GT.0) THEN
-             !Ice collection main source of growth, so set new density layer
-             DENSELI = 700.
+              !Ice collection main source of growth, so set new density layer
+              DENSELI = 700.
           ENDIF
           
           !All liquid water contributes to growth, none is soaked into center.
@@ -2161,9 +2200,6 @@
       ENDIF
 
       !!!VOLUME OF NEW LAYER
-      !VOLL = (DGM) / DENSEL
-      !VOLL = (DGMI+DGMV+DGMW_NOSOAK) / DENSEL
-      !VOLL = (DGMI) / DENSELI + (DGMW_NOSOAK+DGMV) / DENSELW
       IF (DGM.GT.0) THEN
           IF (DGMI.LE.0) THEN
              VOLL = (DGMW_NOSOAK+DGMV) / DENSELW
@@ -2178,12 +2214,9 @@
 
       !!!NEW TOTAL VOLUME, DENSITY, DIAMETER
       VOLT = VOLL + GM/DENSE
-      !DENSE = (GM+DGM) / VOLT
       DENSE = (GM+DGMI+DGMV+DGMW_NOSOAK) / VOLT
-      !D=D+SEKDEL*0.5*VT/DENSE*(XW*EW+XI*EI)      
       GM = GM+DGMI+DGMW_NOSOAK+DGMV
       D = ( (6*GM) / (PI*DENSE) )**0.33333333 
-      !WRITE(*,*) 'DENSE', DENSE
 
      !if (np.eq.464922) write(*,'(a25,3f9.3)') 'MASSAGR DENSE,GM,D: ', DENSE, GM, D
      !if (np.eq.464922) write(*,'(a25,3f9.3)') 'MASSAGR VOLT,VOLL,DGM: ', VOLT,VOLL,DGM
@@ -2233,8 +2266,6 @@
       
       !Convert values to non-SI units here
       TSC = TS - 273.155
-      !TSCm1 = TSm1 - 273.155
-      !TSCm2 = TSm2 - 273.155
       TCC = TC - 273.155
       DELRWC = DELRW * (1.E3) * (1.E-6)  !kg/m3 --> g/cm3
       DENSAC = DENSA * (1.E3) * (1.E-6)
@@ -2264,9 +2295,9 @@
       IF(RE.LT.6000.0)THEN
          AH=0.78+0.308*H
       ELSE IF (RE.GE.6000.0.AND.RE.LT.20000.0)THEN
-            AH=0.5 * 0.76*H  !RH87 Table 1 eq. 4 shifts from factor of 4 to factor of 2
+         AH=0.5 * 0.76*H  !RH87 Table 1 eq. 4 shifts from factor of 4 to factor of 2
       ELSE IF (RE.GE.20000.0) THEN
-           AH = 0.5 * (0.57 + 9.0E-6*RE)*H !RH87 Table 1 eq. 5 shifts from factor of 4 to factor of 2
+         AH = 0.5 * (0.57 + 9.0E-6*RE)*H !RH87 Table 1 eq. 5 shifts from factor of 4 to factor of 2
       ENDIF
 
       !!!  FOR DRY GROWTH FW=0, CALCULATE NEW TS, ITIPE=1 
@@ -2295,15 +2326,14 @@
         ! term with DELRWC.
         TSC=TSC-TSC*DGMC/GM1C+SEKDEL/(GM1C*CI)*                &
             (2.*PI*DCM*(AH*AK*(TCC-TSC)-AE*ALS*DI*DELRWC)+     &
-            DGMWC/SEKDEL*(ALF+CW*TCC)+DGMIC/SEKDEL*CI*TCC)
-         
-         TS = TSC+273.155
-         IF (TS.GE.273.155) THEN 
+            DGMWC/SEKDEL*(ALF+CW*(TCC))+DGMIC/SEKDEL*CI*(TCC))     
+
+        TS = TSC+273.155
+        IF (TS.GE.273.155) THEN 
             TS=273.155
-         ENDIF
-         !TDIFF = ABS(TS-273.155)         
+        ENDIF
          !IF (TDIFF.LE.1.E-6) ITYPE=2  !NOW IN WET GROWTH
-         IF ((TS.GE.273.155).OR.(TC.GT.273.155)) ITYPE=2  !NOW IN WET GROWTH
+        IF ((TS.GE.273.155).OR.(TC.GT.273.155)) ITYPE=2  !NOW IN WET GROWTH
      
       ELSE IF (ITYPE.EQ.2) THEN
       !!!  WET GROWTH; CALC NEW FW          
@@ -2326,6 +2356,7 @@
             FW = FW-FW*DGMC/GMC + &
                  SEKDEL/(GMC*ALF)*(2.*PI*DCM*(AH*AK*TCC-AE*ALV*DI*DELRWC)+ &
                  DGMWC/SEKDEL*(ALF+CW*TCC)+DGMIC/SEKDEL*CI*TCC)
+            
          ELSE
             !Calculate decrease in ice mass due to melting
             !Note about signs, RAS 20240124 - when TCC is positive it means an
