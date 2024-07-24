@@ -1885,11 +1885,22 @@
         DMAX = D*a_shedd
         DCMAX = DMAX*1.E2  !m to cm
 
-        IF (DCMAX .ge. 1.5) THEN
-            VT = 8.4*DCMAX**0.67
+        ! IF (DCMAX .ge. 1.5) THEN  
+        !     VT = 8.4*DCMAX**0.67
+        ! ELSE  ! if .lt. 1.5
+        !     VT = 7.6*DCMAX**0.89
+        ! ENDIF
+
+        !Modified version (see Pounds et al. 2024b Section 3.a.2 for 
+        ! discussion) to ensure terminal velocity of large oblate 
+        ! hailstones is not greater than that of spherical
+        ! hailstones of equivalent mass
+        IF (DCMAX .ge. 1.25) THEN
+            VT = 8.6*DCMAX**0.55*(1.225/DENSA)**0.5
         ELSE  ! if .lt. 1.5
-            VT = 7.6*DCMAX**0.89
-        ENDIF
+            VT = 7.6*DCMAX**0.89*(1.225/DENSA)**0.5
+        ENDIF   
+
 
     
       else  !oblate_vt == 0

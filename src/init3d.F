@@ -433,7 +433,7 @@
         n = 0
         !Right mover trajectories
         do k=1,32
-        do j=1,109 !93 20120529 sounding 2
+        do j=1,129 !93 20120529 sounding 2
         do i=1,145 !145 20120529 sounding 2
           n = n + 1
           if(n.gt.nhailtrajs)then
