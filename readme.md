@@ -3,6 +3,10 @@
 This code is a four-dimensional, fully integrated version of the Adams-Selin and Ziegler 2016 hail trajectory model in version 19.8 of CM1. The physics of the model is  more fully described in Pounds et al. 2024.
 
 **Please cite the following references**: *Adams-Selin, R.D., 2023: A three-dimensional trajectory clustering technique. Mon. Wea. Rev., 151, 2361–2375, https://doi.org/10.1175/MWR-D-22-0345.1.* and *Pounds, L. E., C. L. Ziegler, R. D. Adams-Selin, and M. I. Biggerstaff, 2024: Analysis of hail production via simulated hailstone trajectories in the 29 May 2012 Kingfisher, Oklahoma, supercell. Mon. Wea. Rev., 152, 245–276, https://doi.org/10.1175/MWR-D-23-0073.1.*
+
+Additionally, this code has been uploaded to Zenodo and given the following DOI: [![DOI](https://zenodo.org/badge/577845382.svg)](https://zenodo.org/doi/10.5281/zenodo.13243355)
+
+
  
 ## Implementation details
 
