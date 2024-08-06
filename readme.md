@@ -1,13 +1,13 @@
 # 4D HAILCAST hail trajectory model, incorporated into CM1
 
-This code is a four-dimensional, fully integrated version of the Adams-Selin and Ziegler 2016 hail trajectory model in version 19.8 of CM1.
+This code is a four-dimensional, fully integrated version of the Adams-Selin and Ziegler 2016 hail trajectory model in version 19.8 of CM1. The physics of the model is  more fully described in Pounds et al. 2024.
 
-**Please cite the following reference**: *Adams-Selin, R.D., 2023: A three-dimensional trajectory clustering technique. Mon. Wea. Rev., 151, 2361–2375, https://doi.org/10.1175/MWR-D-22-0345.1.*
+**Please cite the following references**: *Adams-Selin, R.D., 2023: A three-dimensional trajectory clustering technique. Mon. Wea. Rev., 151, 2361–2375, https://doi.org/10.1175/MWR-D-22-0345.1.* and *Pounds, L. E., C. L. Ziegler, R. D. Adams-Selin, and M. I. Biggerstaff, 2024: Analysis of hail production via simulated hailstone trajectories in the 29 May 2012 Kingfisher, Oklahoma, supercell. Mon. Wea. Rev., 152, 245–276, https://doi.org/10.1175/MWR-D-23-0073.1.*
  
 ## Implementation details
 
-A few differences with the ASZ16 hail trajectory model: this subroutine allows for melting at every timestep.  If inside cloud, the melting is
-determined via the RH87 heat balance equation. If outside or below cloud, melting is determined using Eq. 3 of Goyer et al. (1969), assuming a  spherical hailstone melting in dry air. This replaces the mean below- cloud melting calculations performed in ASZ16.
+A few differences with the ASZ16 hail trajectory model: this subroutine allows for melting at every timestep.  If inside cloud, the melting is determined via the RH87 heat balance equation. If outside or below cloud, melting is determined using Eq. 3 of Goyer et al. (1969), assuming a **spherical** hailstone melting in dry air. This replaces the mean below- cloud melting calculations performed in ASZ16.
+Code for oblate spheroidal hailstones is available in the _zshape_ branch.
 
 The CM1 parcel code was repurposed here for advecting the hailstones. Hailstones are first advected using a two-step Runge-Kutta process. Hailstone terminal velocity is calculated and incorporated at both steps.  Following the advection, physical variables are interpolated at the new hailstone location and hailstone growth/melting is determined via the hailstone_trajectory subroutine.  Once the hailstone reaches one of the edges of the domain, hailstone_trajectory is no longer called and the hailstone remains there for the rest of the simulation.
 
@@ -49,15 +49,6 @@ For additional documentation, see George Bryan’s README for his parcel code (R
 * hail_w: output environmental w wind 
 
 Hail diameter, density, x, y, z location, and itype (if in wet or dry growth),  are always output.
-
-#### Microphysical options to choose to turn on/off in hail code (0 off/1 on):
-**Note these options do not yet work!**
-
-For the full impact of oblate-shaped hailstones, set all these to non-zero values.
-* oblate_heat: include impact of oblate hailstone in heat transfer
-* oblate_massagg: include impact of oblate hailstone in mass aggregation
-* oblate_vt: include impact of oblate hailstone in terminal velocity ($V_t$) calculation. 
-    - If set to (1), use the Rasmussen and Heymsfield 1987 X-Re relationship.
 
 
 ## Run Instructions
