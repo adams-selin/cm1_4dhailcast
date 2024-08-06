@@ -1,17 +1,20 @@
 # 4D HAILCAST hail trajectory model, incorporated into CM1
 
-This code is a four-dimensional, fully integrated version of the Adams-Selin and Ziegler 2016 hail trajectory model in version 19.8 of CM1.
+This code is a four-dimensional, fully integrated version of the Adams-Selin and Ziegler 2016 hail trajectory model in version 19.8 of CM1. The physics of the model is  more fully described in Pounds et al. 2024. This branch includes namelist setttings for oblate spheroidal hailstone shapes. See the namelist options below.
 
-**Please cite the following reference**: *Adams-Selin, R.D., 2023: A three-dimensional trajectory clustering technique. Mon. Wea. Rev., 151, 2361–2375, https://doi.org/10.1175/MWR-D-22-0345.1.*
+**Please cite the following references**: 
+- Adams-Selin, R.D., 2023: A three-dimensional trajectory clustering technique. *Mon. Wea. Rev.*, 151, 2361–2375, https://doi.org/10.1175/MWR-D-22-0345.1.
+- Pounds, L. E., C. L. Ziegler, R. D. Adams-Selin, and M. I. Biggerstaff, 2024a: Analysis of hail production via simulated hailstone trajectories in the 29 May 2012 Kingfisher, Oklahoma, supercell. *Mon. Wea. Rev.*, 152, 245–276, https://doi.org/10.1175/MWR-D-23-0073.1.
+- Pounds, L.E., C. L. Ziegler, R. D. Adams-Selin, S. F. Blair, and J. M. Laflin, 2024b: Sensitivity of modeled hailstone growth and surface hailfall characteristics to shpae, water shedding, and ice collection efficiency in a radar-observed supercell storm. *Mon. Wea. Review, submitted.*
+ 
  
 ## Implementation details
 
-A few differences with the ASZ16 hail trajectory model: this subroutine allows for melting at every timestep.  If inside cloud, the melting is
-determined via the RH87 heat balance equation. If outside or below cloud, melting is determined using Eq. 3 of Goyer et al. (1969), assuming a  spherical hailstone melting in dry air. This replaces the mean below- cloud melting calculations performed in ASZ16.
+A few differences with the ASZ16 hail trajectory model: this subroutine allows for melting at every timestep.  If inside cloud, the melting is determined via the RH87 heat balance equation. If outside or below cloud, melting is determined using Eq. 3 of Goyer et al. (1969), assuming a hailstone melting in dry air. This replaces the mean below-cloud melting calculations performed in ASZ16.
 
 The CM1 parcel code was repurposed here for advecting the hailstones. Hailstones are first advected using a two-step Runge-Kutta process. Hailstone terminal velocity is calculated and incorporated at both steps.  Following the advection, physical variables are interpolated at the new hailstone location and hailstone growth/melting is determined via the hailstone_trajectory subroutine.  Once the hailstone reaches one of the edges of the domain, hailstone_trajectory is no longer called and the hailstone remains there for the rest of the simulation.
 
-Due to the nature of hailstones, some of the largest trajectory speeds occur near the surface.  I had to add a check for below ground heights within the 1st rk loop, not just after the 2nd as in the parcel code.
+Due to the nature of hailstones, some of the largest trajectory speeds occur near the surface.  I had to add a check for below ground heights within the 1st RK loop, not just after the 2nd as in the parcel code.
 
 One possibility I haven't accounted for: I'm still allowing the hailstone to fall and be advected even if it has reached the edge of the domain. That could have an impact if it shot off the top, as it might eventually fall back down into the simulation and start growing again.  Thus far, stratospheric hailstones don't seem to be much of a problem.
 
@@ -53,12 +56,12 @@ Hail diameter, density, x, y, z location, and itype (if in wet or dry growth),  
 #### Microphysical options to choose to turn on/off in hail code (0 off/1 on):
 **Note these options only work in the zshape branch!**
 
-For the full impact of oblate-shaped hailstones, set all these to non-zero values. If *any* of these is set to 1, phi_min must also be set.
+For the full impact of oblate-shaped hailstones, set all these oblate_* options to non-zero values. If *any* of these is set to 1 or larger, phi_min must also be set.
 * phi_min: ratio of minimum oblate spheroid diameter over maximum diameter (as in Shedd et al. 2021). If any of the oblate_* namelist options below are set to 1, it defaults to 0.51 as in Pounds et al. 2024b.
 * oblate_heat: include impact of oblate hailstone in heat transfer
 * oblate_massagg: include impact of oblate hailstone in mass aggregation
 * oblate_vt: include impact of oblate hailstone in terminal velocity ($V_t$) calculation. 
-    - If set to (1), use the Vt-D relationships from Heymsfield et al. 2020 (corredigum)
+    - If set to (1), use the Vt-D relationships from Pounds et al. 2024b (modified version of Heymsfield et al. 2020).
 
 
 ## Run Instructions
@@ -69,6 +72,6 @@ Depending on what you are simulating, it is likely you won't want to initialize 
 1. Compile the CM1 code with the number/locations of hail embryos you want declared in init3d.F.
 2. Start the model run with _no_ hail embryos (ihailtraj=0), and run the simulation until you a realistic looking storm has developed. Write out a restart file.
 3. Add the appropriate number of hail embryos/locations to the restart file, using the included python script add_hail_to_restart.py. Make sure these match what you coded in init3d.F.
-4. Start the model again with ihailtraj=1 and all other hail-related namelist parameters set. Run the model until all hail has fallen out (no more than 45-60 min).
+4. Start the model again with ihailtraj=1 and all other hail-related namelist parameters set. Run the model until all hail has fallen out (usually no more than 45-60 min).
 5. As desired, you can repeat steps 2-4 with incrementally later restart files. E.g., Run a no-hail simulation, write out a restart file at 60 min, add hail embryos, run for an hour. Write out a restart file from the no-hail simulation at 65 min, add hail embryos, run for an hour. Etc.
 
