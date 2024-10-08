@@ -58,7 +58,7 @@ For the full impact of oblate-shaped hailstones, set all these to non-zero value
 * oblate_heat: include impact of oblate hailstone in heat transfer
 * oblate_massagg: include impact of oblate hailstone in mass aggregation
 * oblate_vt: include impact of oblate hailstone in terminal velocity ($V_t$) calculation. 
-    - If set to (1), use the Vt-D relationships from Heymsfield et al. 2020 (corredigum)
+    - If set to (1), use the Vt-D relationships from Heymsfield et al. 2020 (corredigum), but modified to use the Vt-D relationship exponent from Bohm et al. 1989, to ensure the terminal velocity of large oblate hailstones is not greater than that of spherical hailstones of equivalent mass, as determined by RH87.
 
 
 ## Run Instructions
