@@ -6,7 +6,7 @@ This code is a four-dimensional, fully integrated version of the Adams-Selin and
 
 Additionally, this code has been uploaded to Zenodo and given the following DOI: [![DOI](https://zenodo.org/badge/577845382.svg)](https://zenodo.org/doi/10.5281/zenodo.13243355)
 
-
+**If you are interested in the version of the code allowing for oblate spheroids instead of spherical hail, see the "zshape" branch.**
  
 ## Implementation details
 
