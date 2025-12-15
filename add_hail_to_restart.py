@@ -2,6 +2,25 @@ import numpy as np
 import netCDF4 as nc4
 import pandas as pd
 
+#As described in the readme doc, this script is designed to add hail embryos to a CM1 restart file
+# in order to start modeling their hail trajectories.
+
+#This script assumes you have done the following things:
+# 1) Run a "clean" version of your storm with no hail trajectories (ihailtraj = 0).
+#    Start your simulation at time 0 until the storm has reached a reasonable 
+#    level of intensity at which hail could start.
+#    Write out a restart file at that point. I call this the "clean_run".
+# 2) Run a "quick restart" version of your storm. Start your simulation at time 0;
+#    stop it one model timestep later and write out a restart file. Here you *include*
+#    ihailtraj=1 and set your number of hail trajectories (nhailtraj = XX in the namelist,
+#    also see init3d.F) to what you would like. The restart file will have starting 
+#    conditions for all your hail embryos nicely written out in the correct format.
+
+# This script basically copies the initial hail embryo from the quick_restart run to 
+#  your restart file from the "clean" run. Now you can restart your storm, and hail
+#  embryos will be initialized in your mature storm!
+
+
 #open the restart file with hail data in it
 nc = nc4.Dataset('/glade/derecho/scratch/radams/20120529/quick_restart/cm1out_rst_000001.nc','r')
 nhailloc = nc.dimensions['nhailloc'].size
@@ -18,7 +37,7 @@ restart_time = np.ceil(np.array(nohail_nc.variables['time']))
 nc.close()
 
 
-#pull in haildata from the actual haildata file to see what it should look like at time 0
+#pull in haildata from the quick_restart haildata file to see what it should look like at time 0
 nc = nc4.Dataset('/glade/derecho/scratch/radams/20120529/quick_restart/cm1out_haildata.nc','r')
 hailx_from_t0 = np.array(nc.variables['x'][0,:])
 haily_from_t0 = np.array(nc.variables['y'][0,:])
