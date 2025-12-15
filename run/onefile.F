@@ -35746,13 +35746,13 @@ goddard.F/      1707940214  5347  1000  100644  62672     `
       END subroutine consat2
 
   END MODULE goddard_module
-hail.F/         1708458720  5347  1000  100644  97905     `
+hail.F/         1721845506  5347  1000  100644  98177     `
   MODULE hailcast_module
 
 !-----------------------------------------------------------------------------
 !
 !  HAILCAST hail trajectory model
-!  
+!  https://github.com/adams-selin/cm1_4dhailcast
 !
 !  (c)2019 - Atmospheric and Environmental Research
 !
@@ -36765,6 +36765,7 @@ hail.F/         1708458720  5347  1000  100644  97905     `
             haildata(np,haild) = -1.0e30
             haildata(np,haildense) = -1.0e30
             haildata(np,haildice) = -1.0e30
+            haildata(np,hailfw) = -1.0e30
             haildata(np,hailts) = -1.0e30
             haildata(np,hailvt) = -1.0e30
             haildata(np,hailitype) = -1.0e30
@@ -37398,9 +37399,6 @@ hail.F/         1708458720  5347  1000  100644  97905     `
     REAL VT                    ! terminal velocity (m/s)
     REAL V                     ! actual stone velocity (m/s)
     REAL TS                    ! hailstone temperature (K)
-    REAL X, Y, Z               ! hail location (m)
-    !RAS15.10 HAILSTONE temperature differencing
-    !REAL TSm1, TSm2            ! hailstone temperature at previous 3 timesteps
     REAL FW                    ! fraction of stone that is liquid
     REAL WATER                 ! mass of stone that is liquid
     REAL CRIT                  ! critical water fraction before shedding
@@ -37471,6 +37469,7 @@ hail.F/         1708458720  5347  1000  100644  97905     `
         TS = TC
         IF (TS.GE.273.155) THEN
             ITYPE = 2  !1 dry, 2 wet
+            TS = 273.155
         ELSE
             ITYPE = 1  !1 dry, 2 wet
         ENDIF
@@ -37488,12 +37487,6 @@ hail.F/         1708458720  5347  1000  100644  97905     `
     
 
     !!!!!!!!!!!!!!!!!!!!!!!!! START INTERACTING !!!!!!!!!!!!!!!!!!!!!!!
-    ! if (np.eq.313793) write(*,'(a30,2f12.9)') &
-    !     'Entering hailtraj D, RI+RW: ', D, RI+RW
-    ! if (np.eq.313793) write(*,'(a30,f5.1,1x,f12.9,1x,f9.6)') &
-    !     'Entering hailtraj TC, GM, FW: ', TC, GM, FW
-    
-
     !Has the hailstone has melted entirely? If so (and we 
     ! are also below the melting level), we can skip the rest.
     IF ((FW .EQ. 1.0) .AND. (TC .GT. 273.15)) THEN
@@ -37641,11 +37634,22 @@ hail.F/         1708458720  5347  1000  100644  97905     `
         DMAX = D*a_shedd
         DCMAX = DMAX*1.E2  !m to cm
 
-        IF (DCMAX .ge. 1.5) THEN
-            VT = 8.4*DCMAX**0.67
+        ! IF (DCMAX .ge. 1.5) THEN  
+        !     VT = 8.4*DCMAX**0.67
+        ! ELSE  ! if .lt. 1.5
+        !     VT = 7.6*DCMAX**0.89
+        ! ENDIF
+
+        !Modified version (see Pounds et al. 2024b Section 3.a.2 for 
+        ! discussion) to ensure terminal velocity of large oblate 
+        ! hailstones is not greater than that of spherical
+        ! hailstones of equivalent mass
+        IF (DCMAX .ge. 1.25) THEN
+            VT = 8.6*DCMAX**0.55*(1.225/DENSA)**0.5
         ELSE  ! if .lt. 1.5
-            VT = 7.6*DCMAX**0.89
-        ENDIF
+            VT = 7.6*DCMAX**0.89*(1.225/DENSA)**0.5
+        ENDIF   
+
 
     
       else  !oblate_vt == 0
@@ -37777,13 +37781,18 @@ hail.F/         1708458720  5347  1000  100644  97905     `
 
       !!!  COLLECTION EFFICIENCY FOR WATER AND ICE 
       EW=1.0      
-      !!!  Linear function for ice accretion efficiency
-      IF (TC .GE. 273.155) THEN
-         EI=1.00
-      ELSE IF (TC.GE.233.155) THEN
-         EI= 1.0 - ( (273.155 - TS) / 40. )
-      ELSE  !cooler than -40C
-         EI = 0.0
+    !   !!!  Linear function for ice accretion efficiency
+    !   IF (TC .GE. 273.155) THEN
+    !      EI=1.00
+    !   ELSE IF (TC.GE.233.155) THEN
+    !      EI= 1.0 - ( (273.155 - TS) / 40. )
+    !   ELSE  !cooler than -40C
+    !      EI = 0.0
+    !   ENDIF
+      IF (ITYPE.EQ.2) THEN  !Wet growth, following KL20 and P24b
+        EI=1.0
+      ELSE
+        EI=0.0
       ENDIF
 
       !Something to consider - Pruppacher and Klett 1996 (2nd ed.) have an
@@ -37854,9 +37863,9 @@ hail.F/         1708458720  5347  1000  100644  97905     `
       !!! CALCULATE INCREASE IN MASS DUE TO SUBLIMATION/CONDENSATION OF 
       !!! WATER VAPOR
       if ( oblate_massagg .gt. 0) then
-          DGMV = -sa_factor*SEKDEL*PI*D*AE*DI_SI*DELRW
+          DGMV = sa_factor*SEKDEL*PI*D*AE*DI_SI*DELRW
       else
-          DGMV = -SEKDEL*PI*D*AE*DI_SI*DELRW
+          DGMV = SEKDEL*2*PI*D*AE*DI_SI*DELRW
       endif
       IF (DGMV .LT. 0) DGMV=0
 
@@ -39721,7 +39730,7 @@ hifrq.F/        1707940214  5347  1000  100755  39289     `
 
   END MODULE hifrq_module
 
-init3d.F/       1707948203  5347  1000  100644  79325     `
+init3d.F/       1708986068  5347  1000  100644  79325     `
   MODULE init3d_module
 
   implicit none
@@ -40157,7 +40166,7 @@ init3d.F/       1707948203  5347  1000  100644  79325     `
         n = 0
         !Right mover trajectories
         do k=1,32
-        do j=1,109 !93 20120529 sounding 2
+        do j=1,129 !93 20120529 sounding 2
         do i=1,145 !145 20120529 sounding 2
           n = n + 1
           if(n.gt.nhailtrajs)then
