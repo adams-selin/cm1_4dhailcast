@@ -2,3 +2,4 @@
 *.o
 *.mod
 *.exe
+.DS_Store
